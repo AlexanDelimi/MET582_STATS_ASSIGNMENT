@@ -1,0 +1,13 @@
+library(readr)
+library(stringr)
+library(dplyr)
+library(tidyverse)
+library(tidyr)
+library(gapminder)
+library(ggplot2)
+library(nycflights13)
+library(randomNames)
+library(randomcoloR)
+library(modelr)
+
+ffq<-read.csv("FFQ_for_MET582.csv")
