@@ -31,6 +31,8 @@ setwd("D:/siobh/Documents/Uni/MSc/MET582/Coursework/Data Project")
 DOMINO <- read_csv(file = "FFQ_for_MET582.csv", col_names = TRUE, na = "NA") %>%
   select(COUNTRY:OLIVES)
 head(DOMINO)
+table(DOMINO$COUNTRY)
+
 ```
 
 ```{r, include=TRUE, echo = FALSE, error=FALSE, warning=FALSE}
@@ -168,4 +170,659 @@ cat_violin <- ggplot(DOMINO_cat, aes(x=CATEGORY, y=FFQ, fill=COUNTRY)) +
   scale_fill_brewer(palette="Spectral")
 print(cat_violin)
 ```
+
+
+# Meeting 2
+
+### VEG
+```{r}
+library(sm)
+sm.density(DOMINO_cat$FFQ, xlab = "FFQ Score")
+shapiro.test(DOMINO_cat$FFQ[0:5000])
+
+library(nortest)
+ad.test(DOMINO_cat$FFQ)
+
+# Significant result indicates data comes from a non-normal distribution (which matches the shape of the density plot)
+
+# tESTING WHETHER SPAIN AND UK SIGNIFICANTLY DIFFER ON VEG CONSUMPTION
+UK_DOMINO <- DOMINO_cat %>%
+  filter(COUNTRY == "UK" & CATEGORY == "VEG")
+SPAIN_DOMINO <- DOMINO_cat %>%
+  filter(COUNTRY == "Spain" & CATEGORY == "VEG")
+test_DOMINO <- rbind(UK_DOMINO, SPAIN_DOMINO)
+wilcox.test(test_DOMINO$FFQ ~ test_DOMINO$COUNTRY)
+
+ggplot(test_DOMINO, aes(COUNTRY,FFQ, color=COUNTRY))+stat_summary(fun.y=mean,geom="point")+
+    stat_summary(fun.data=mean_cl_normal, geom="errorbar")+ylab("Mean FFQ Score")+xlab("Country")+ggtitle("FFQ Scores (VEG) in UK and Spain")+  theme(legend.position = "none")
+
+# Delineate
+table(test_DOMINO$COUNTRY)
+
+# TESTING WHETHER SPAIN AND UK SIGNIFICANTLY DIFFER ON VEG CONSUMPTION
+POL_DOMINO <- DOMINO_cat %>%
+  filter(COUNTRY == "Poland" & CATEGORY == "VEG")
+test_DOMINO <- rbind(UK_DOMINO, POL_DOMINO)
+wilcox.test(test_DOMINO$FFQ ~ test_DOMINO$COUNTRY)
+
+ggplot(test_DOMINO, aes(COUNTRY,FFQ, color=COUNTRY))+stat_summary(fun.y=mean,geom="point")+
+    stat_summary(fun.data=mean_cl_normal, geom="errorbar")+ylab("Mean FFQ Score")+xlab("Country")+ggtitle("FFQ Scores (VEG) in UK and Spain ")+  theme(legend.position = "none")
+
+# Delineate
+table(test_DOMINO$COUNTRY)
+
+# TESTING WHETHER SPAIN AND UK SIGNIFICANTLY DIFFER ON VEG CONSUMPTION
+test_DOMINO <- rbind(SPAIN_DOMINO, POL_DOMINO)
+wilcox.test(test_DOMINO$FFQ ~ test_DOMINO$COUNTRY)
+
+ggplot(test_DOMINO, aes(COUNTRY,FFQ, color=COUNTRY))+stat_summary(fun.y=mean,geom="point")+
+    stat_summary(fun.data=mean_cl_normal, geom="errorbar")+ylab("Mean FFQ Score")+xlab("Country")+ggtitle("FFQ Scores (VEG) in UK and Spain ")+  theme(legend.position = "none")
+
+# Delineate
+table(test_DOMINO$COUNTRY)
+```
+
+
+
+
+
+### DAIRY & FAT
+```{r}
+library(sm)
+sm.density(DOMINO_cat$FFQ, xlab = "FFQ Score")
+shapiro.test(DOMINO_cat$FFQ[0:5000])
+
+library(nortest)
+ad.test(DOMINO_cat$FFQ)
+
+# Significant result indicates data comes from a non-normal distribution (which matches the shape of the density plot)
+
+# tESTING WHETHER SPAIN AND UK SIGNIFICANTLY DIFFER ON DAIRY & FATS CONSUMPTION
+UK_DOMINO <- DOMINO_cat %>%
+  filter(COUNTRY == "UK" & CATEGORY == "DAIRY & FATS")
+SPAIN_DOMINO <- DOMINO_cat %>%
+  filter(COUNTRY == "Spain" & CATEGORY == "DAIRY & FATS")
+test_DOMINO <- rbind(UK_DOMINO, SPAIN_DOMINO)
+wilcox.test(test_DOMINO$FFQ ~ test_DOMINO$COUNTRY)
+
+ggplot(test_DOMINO, aes(COUNTRY,FFQ, color=COUNTRY))+stat_summary(fun.y=mean,geom="point")+
+    stat_summary(fun.data=mean_cl_normal, geom="errorbar")+ylab("Mean FFQ Score")+xlab("Country")+ggtitle("FFQ Scores (DAIRY & FATS) in UK and Spain ")+  theme(legend.position = "none")
+
+# Delineate
+table(test_DOMINO$COUNTRY)
+
+# TESTING WHETHER SPAIN AND UK SIGNIFICANTLY DIFFER ON DAIRY & FATS CONSUMPTION
+POL_DOMINO <- DOMINO_cat %>%
+  filter(COUNTRY == "Poland" & CATEGORY == "DAIRY & FATS")
+test_DOMINO <- rbind(UK_DOMINO, POL_DOMINO)
+wilcox.test(test_DOMINO$FFQ ~ test_DOMINO$COUNTRY)
+
+ggplot(test_DOMINO, aes(COUNTRY,FFQ, color=COUNTRY))+stat_summary(fun.y=mean,geom="point")+
+    stat_summary(fun.data=mean_cl_normal, geom="errorbar")+ylab("Mean FFQ Score")+xlab("Country")+ggtitle("FFQ Scores (DAIRY & FATS) in UK and Poland ")+  theme(legend.position = "none")
+
+# Delineate
+table(test_DOMINO$COUNTRY)
+
+# TESTING WHETHER SPAIN AND UK SIGNIFICANTLY DIFFER ON DAIRY & FATS CONSUMPTION
+test_DOMINO <- rbind(SPAIN_DOMINO, POL_DOMINO)
+wilcox.test(test_DOMINO$FFQ ~ test_DOMINO$COUNTRY)
+
+ggplot(test_DOMINO, aes(COUNTRY,FFQ, color=COUNTRY))+stat_summary(fun.y=mean,geom="point")+
+    stat_summary(fun.data=mean_cl_normal, geom="errorbar")+ylab("Mean FFQ Score")+xlab("Country")+ggtitle("FFQ Scores (DAIRY & FATS) in Spain and Poland")+  theme(legend.position = "none")
+
+# Delineate
+table(test_DOMINO$COUNTRY)
+```
+
+
+
+
+### MEAT & FISH
+```{r}
+library(sm)
+sm.density(DOMINO_cat$FFQ, xlab = "FFQ Score")
+shapiro.test(DOMINO_cat$FFQ[0:5000])
+
+library(nortest)
+ad.test(DOMINO_cat$FFQ)
+
+# Significant result indicates data comes from a non-normal distribution (which matches the shape of the density plot)
+
+# tESTING WHETHER SPAIN AND UK SIGNIFICANTLY DIFFER ON MEAT & FISH CONSUMPTION
+UK_DOMINO <- DOMINO_cat %>%
+  filter(COUNTRY == "UK" & CATEGORY == "MEAT & FISH")
+SPAIN_DOMINO <- DOMINO_cat %>%
+  filter(COUNTRY == "Spain" & CATEGORY == "MEAT & FISH")
+test_DOMINO <- rbind(UK_DOMINO, SPAIN_DOMINO)
+wilcox.test(test_DOMINO$FFQ ~ test_DOMINO$COUNTRY)
+
+ggplot(test_DOMINO, aes(COUNTRY,FFQ, color=COUNTRY))+stat_summary(fun.y=mean,geom="point")+
+    stat_summary(fun.data=mean_cl_normal, geom="errorbar")+ylab("Mean FFQ Score")+xlab("Country")+ggtitle("FFQ Scores (MEAT & FISH) in UK and Spain ")+  theme(legend.position = "none")
+
+# Delineate
+table(test_DOMINO$COUNTRY)
+
+# TESTING WHETHER SPAIN AND UK SIGNIFICANTLY DIFFER ON MEAT & FISH CONSUMPTION
+POL_DOMINO <- DOMINO_cat %>%
+  filter(COUNTRY == "Poland" & CATEGORY == "MEAT & FISH")
+test_DOMINO <- rbind(UK_DOMINO, POL_DOMINO)
+wilcox.test(test_DOMINO$FFQ ~ test_DOMINO$COUNTRY)
+
+ggplot(test_DOMINO, aes(COUNTRY,FFQ, color=COUNTRY))+stat_summary(fun.y=mean,geom="point")+
+    stat_summary(fun.data=mean_cl_normal, geom="errorbar")+ylab("Mean FFQ Score")+xlab("Country")+ggtitle("FFQ Scores (MEAT & FISH) in UK and Poland ")+  theme(legend.position = "none")
+
+# Delineate
+table(test_DOMINO$COUNTRY)
+
+# TESTING WHETHER SPAIN AND UK SIGNIFICANTLY DIFFER ON MEAT & FISH CONSUMPTION
+test_DOMINO <- rbind(SPAIN_DOMINO, POL_DOMINO)
+wilcox.test(test_DOMINO$FFQ ~ test_DOMINO$COUNTRY)
+
+ggplot(test_DOMINO, aes(COUNTRY,FFQ, color=COUNTRY))+stat_summary(fun.y=mean,geom="point")+
+    stat_summary(fun.data=mean_cl_normal, geom="errorbar")+ylab("Mean FFQ Score")+xlab("Country")+ggtitle("FFQ Scores (MEAT & FISH) in Spain and Poland")+  theme(legend.position = "none")
+
+# Delineate
+table(test_DOMINO$COUNTRY)
+```
+
+
+
+
+### FRUIT
+```{r}
+library(sm)
+sm.density(DOMINO_cat$FFQ, xlab = "FFQ Score")
+shapiro.test(DOMINO_cat$FFQ[0:5000])
+
+library(nortest)
+ad.test(DOMINO_cat$FFQ)
+
+# Significant result indicates data comes from a non-normal distribution (which matches the shape of the density plot)
+
+# tESTING WHETHER SPAIN AND UK SIGNIFICANTLY DIFFER ON FRUIT CONSUMPTION
+UK_DOMINO <- DOMINO_cat %>%
+  filter(COUNTRY == "UK" & CATEGORY == "FRUIT")
+SPAIN_DOMINO <- DOMINO_cat %>%
+  filter(COUNTRY == "Spain" & CATEGORY == "FRUIT")
+test_DOMINO <- rbind(UK_DOMINO, SPAIN_DOMINO)
+wilcox.test(test_DOMINO$FFQ ~ test_DOMINO$COUNTRY)
+
+ggplot(test_DOMINO, aes(COUNTRY,FFQ, color=COUNTRY))+stat_summary(fun.y=mean,geom="point")+
+    stat_summary(fun.data=mean_cl_normal, geom="errorbar")+ylab("Mean FFQ Score")+xlab("Country")+ggtitle("FFQ Scores (FRUIT) in UK and Spain ")+  theme(legend.position = "none")
+
+# Delineate
+table(test_DOMINO$COUNTRY)
+
+# TESTING WHETHER SPAIN AND UK SIGNIFICANTLY DIFFER ON FRUIT CONSUMPTION
+POL_DOMINO <- DOMINO_cat %>%
+  filter(COUNTRY == "Poland" & CATEGORY == "FRUIT")
+test_DOMINO <- rbind(UK_DOMINO, POL_DOMINO)
+wilcox.test(test_DOMINO$FFQ ~ test_DOMINO$COUNTRY)
+
+ggplot(test_DOMINO, aes(COUNTRY,FFQ, color=COUNTRY))+stat_summary(fun.y=mean,geom="point")+
+    stat_summary(fun.data=mean_cl_normal, geom="errorbar")+ylab("Mean FFQ Score")+xlab("Country")+ggtitle("FFQ Scores (FRUIT) in UK and Poland ")+  theme(legend.position = "none")
+
+# Delineate
+table(test_DOMINO$COUNTRY)
+
+# TESTING WHETHER SPAIN AND UK SIGNIFICANTLY DIFFER ON FRUIT CONSUMPTION
+test_DOMINO <- rbind(SPAIN_DOMINO, POL_DOMINO)
+wilcox.test(test_DOMINO$FFQ ~ test_DOMINO$COUNTRY)
+
+ggplot(test_DOMINO, aes(COUNTRY,FFQ, color=COUNTRY))+stat_summary(fun.y=mean,geom="point")+
+    stat_summary(fun.data=mean_cl_normal, geom="errorbar")+ylab("Mean FFQ Score")+xlab("Country")+ggtitle("FFQ Scores (FRUIT) in Spain and Poland")+  theme(legend.position = "none")
+
+# Delineate
+table(test_DOMINO$COUNTRY)
+```
+
+
+
+
+
+
+
+
+
+
+
+### BREAD & BISCUITS
+```{r}
+library(sm)
+sm.density(DOMINO_cat$FFQ, xlab = "FFQ Score")
+shapiro.test(DOMINO_cat$FFQ[0:5000])
+
+library(nortest)
+ad.test(DOMINO_cat$FFQ)
+
+# Significant result indicates data comes from a non-normal distribution (which matches the shape of the density plot)
+
+# tESTING WHETHER SPAIN AND UK SIGNIFICANTLY DIFFER ON BREAD & BISCUITS CONSUMPTION
+UK_DOMINO <- DOMINO_cat %>%
+  filter(COUNTRY == "UK" & CATEGORY == "BREAD & BISCUITS")
+SPAIN_DOMINO <- DOMINO_cat %>%
+  filter(COUNTRY == "Spain" & CATEGORY == "BREAD & BISCUITS")
+test_DOMINO <- rbind(UK_DOMINO, SPAIN_DOMINO)
+wilcox.test(test_DOMINO$FFQ ~ test_DOMINO$COUNTRY)
+
+ggplot(test_DOMINO, aes(COUNTRY,FFQ, color=COUNTRY))+stat_summary(fun.y=mean,geom="point")+
+    stat_summary(fun.data=mean_cl_normal, geom="errorbar")+ylab("Mean FFQ Score")+xlab("Country")+ggtitle("FFQ Scores (BREAD & BISCUITS) in UK and Spain ")+  theme(legend.position = "none")
+
+# Delineate
+table(test_DOMINO$COUNTRY)
+
+# TESTING WHETHER SPAIN AND UK SIGNIFICANTLY DIFFER ON BREAD & BISCUITS CONSUMPTION
+POL_DOMINO <- DOMINO_cat %>%
+  filter(COUNTRY == "Poland" & CATEGORY == "BREAD & BISCUITS")
+test_DOMINO <- rbind(UK_DOMINO, POL_DOMINO)
+wilcox.test(test_DOMINO$FFQ ~ test_DOMINO$COUNTRY)
+
+ggplot(test_DOMINO, aes(COUNTRY,FFQ, color=COUNTRY))+stat_summary(fun.y=mean,geom="point")+
+    stat_summary(fun.data=mean_cl_normal, geom="errorbar")+ylab("Mean FFQ Score")+xlab("Country")+ggtitle("FFQ Scores (BREAD & BISCUITS) in UK and Poland ")+  theme(legend.position = "none")
+
+# Delineate
+table(test_DOMINO$COUNTRY)
+
+# TESTING WHETHER SPAIN AND UK SIGNIFICANTLY DIFFER ON BREAD & BISCUITS CONSUMPTION
+test_DOMINO <- rbind(SPAIN_DOMINO, POL_DOMINO)
+wilcox.test(test_DOMINO$FFQ ~ test_DOMINO$COUNTRY)
+
+ggplot(test_DOMINO, aes(COUNTRY,FFQ, color=COUNTRY))+stat_summary(fun.y=mean,geom="point")+
+    stat_summary(fun.data=mean_cl_normal, geom="errorbar")+ylab("Mean FFQ Score")+xlab("Country")+ggtitle("FFQ Scores (BREAD & BISCUITS) in Spain and Poland")+  theme(legend.position = "none")
+
+# Delineate
+table(test_DOMINO$COUNTRY)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### CEREALS
+```{r}
+library(sm)
+sm.density(DOMINO_cat$FFQ, xlab = "FFQ Score")
+shapiro.test(DOMINO_cat$FFQ[0:5000])
+
+library(nortest)
+ad.test(DOMINO_cat$FFQ)
+
+# Significant result indicates data comes from a non-normal distribution (which matches the shape of the density plot)
+
+# tESTING WHETHER SPAIN AND UK SIGNIFICANTLY DIFFER ON CEREALS CONSUMPTION
+UK_DOMINO <- DOMINO_cat %>%
+  filter(COUNTRY == "UK" & CATEGORY == "CEREALS")
+SPAIN_DOMINO <- DOMINO_cat %>%
+  filter(COUNTRY == "Spain" & CATEGORY == "CEREALS")
+test_DOMINO <- rbind(UK_DOMINO, SPAIN_DOMINO)
+wilcox.test(test_DOMINO$FFQ ~ test_DOMINO$COUNTRY)
+
+ggplot(test_DOMINO, aes(COUNTRY,FFQ, color=COUNTRY))+stat_summary(fun.y=mean,geom="point")+
+    stat_summary(fun.data=mean_cl_normal, geom="errorbar")+ylab("Mean FFQ Score")+xlab("Country")+ggtitle("FFQ Scores (CEREALS) in UK and Spain ")+  theme(legend.position = "none")
+
+# Delineate
+table(test_DOMINO$COUNTRY)
+
+# TESTING WHETHER SPAIN AND UK SIGNIFICANTLY DIFFER ON CEREALS CONSUMPTION
+POL_DOMINO <- DOMINO_cat %>%
+  filter(COUNTRY == "Poland" & CATEGORY == "CEREALS")
+test_DOMINO <- rbind(UK_DOMINO, POL_DOMINO)
+wilcox.test(test_DOMINO$FFQ ~ test_DOMINO$COUNTRY)
+
+ggplot(test_DOMINO, aes(COUNTRY,FFQ, color=COUNTRY))+stat_summary(fun.y=mean,geom="point")+
+    stat_summary(fun.data=mean_cl_normal, geom="errorbar")+ylab("Mean FFQ Score")+xlab("Country")+ggtitle("FFQ Scores (CEREALS) in UK and Poland ")+  theme(legend.position = "none")
+
+# Delineate
+table(test_DOMINO$COUNTRY)
+
+# TESTING WHETHER SPAIN AND UK SIGNIFICANTLY DIFFER ON CEREALS CONSUMPTION
+test_DOMINO <- rbind(SPAIN_DOMINO, POL_DOMINO)
+wilcox.test(test_DOMINO$FFQ ~ test_DOMINO$COUNTRY)
+
+ggplot(test_DOMINO, aes(COUNTRY,FFQ, color=COUNTRY))+stat_summary(fun.y=mean,geom="point")+
+    stat_summary(fun.data=mean_cl_normal, geom="errorbar")+ylab("Mean FFQ Score")+xlab("Country")+ggtitle("FFQ Scores (CEREALS) in Spain and Poland")+  theme(legend.position = "none")
+
+# Delineate
+table(test_DOMINO$COUNTRY)
+```
+
+
+
+
+
+### DRINKS
+```{r}
+library(sm)
+sm.density(DOMINO_cat$FFQ, xlab = "FFQ Score")
+shapiro.test(DOMINO_cat$FFQ[0:5000])
+
+library(nortest)
+ad.test(DOMINO_cat$FFQ)
+
+# Significant result indicates data comes from a non-normal distribution (which matches the shape of the density plot)
+
+# tESTING WHETHER SPAIN AND UK SIGNIFICANTLY DIFFER ON DRINKS CONSUMPTION
+UK_DOMINO <- DOMINO_cat %>%
+  filter(COUNTRY == "UK" & CATEGORY == "DRINKS")
+SPAIN_DOMINO <- DOMINO_cat %>%
+  filter(COUNTRY == "Spain" & CATEGORY == "DRINKS")
+test_DOMINO <- rbind(UK_DOMINO, SPAIN_DOMINO)
+wilcox.test(test_DOMINO$FFQ ~ test_DOMINO$COUNTRY)
+
+ggplot(test_DOMINO, aes(COUNTRY,FFQ, color=COUNTRY))+stat_summary(fun.y=mean,geom="point")+
+    stat_summary(fun.data=mean_cl_normal, geom="errorbar")+ylab("Mean FFQ Score")+xlab("Country")+ggtitle("FFQ Scores (DRINKS) in UK and Spain ")+  theme(legend.position = "none")
+
+# Delineate
+table(test_DOMINO$COUNTRY)
+
+# TESTING WHETHER SPAIN AND UK SIGNIFICANTLY DIFFER ON DRINKS CONSUMPTION
+POL_DOMINO <- DOMINO_cat %>%
+  filter(COUNTRY == "Poland" & CATEGORY == "DRINKS")
+test_DOMINO <- rbind(UK_DOMINO, POL_DOMINO)
+wilcox.test(test_DOMINO$FFQ ~ test_DOMINO$COUNTRY)
+
+ggplot(test_DOMINO, aes(COUNTRY,FFQ, color=COUNTRY))+stat_summary(fun.y=mean,geom="point")+
+    stat_summary(fun.data=mean_cl_normal, geom="errorbar")+ylab("Mean FFQ Score")+xlab("Country")+ggtitle("FFQ Scores (DRINKS) in UK and Poland ")+  theme(legend.position = "none")
+
+# Delineate
+table(test_DOMINO$COUNTRY)
+
+# TESTING WHETHER SPAIN AND UK SIGNIFICANTLY DIFFER ON DRINKS CONSUMPTION
+test_DOMINO <- rbind(SPAIN_DOMINO, POL_DOMINO)
+wilcox.test(test_DOMINO$FFQ ~ test_DOMINO$COUNTRY)
+
+ggplot(test_DOMINO, aes(COUNTRY,FFQ, color=COUNTRY))+stat_summary(fun.y=mean,geom="point")+
+    stat_summary(fun.data=mean_cl_normal, geom="errorbar")+ylab("Mean FFQ Score")+xlab("Country")+ggtitle("FFQ Scores (DRINKS) in Spain and Poland")+  theme(legend.position = "none")
+
+# Delineate
+table(test_DOMINO$COUNTRY)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### POTATOES, RICE & PASTA
+```{r}
+library(sm)
+sm.density(DOMINO_cat$FFQ, xlab = "FFQ Score")
+shapiro.test(DOMINO_cat$FFQ[0:5000])
+
+library(nortest)
+ad.test(DOMINO_cat$FFQ)
+
+# Significant result indicates data comes from a non-normal distribution (which matches the shape of the density plot)
+
+# tESTING WHETHER SPAIN AND UK SIGNIFICANTLY DIFFER ON POTATOES, RICE & PASTA CONSUMPTION
+UK_DOMINO <- DOMINO_cat %>%
+  filter(COUNTRY == "UK" & CATEGORY == "POTATOES, RICE & PASTA")
+SPAIN_DOMINO <- DOMINO_cat %>%
+  filter(COUNTRY == "Spain" & CATEGORY == "POTATOES, RICE & PASTA")
+test_DOMINO <- rbind(UK_DOMINO, SPAIN_DOMINO)
+wilcox.test(test_DOMINO$FFQ ~ test_DOMINO$COUNTRY)
+
+ggplot(test_DOMINO, aes(COUNTRY,FFQ, color=COUNTRY))+stat_summary(fun.y=mean,geom="point")+
+    stat_summary(fun.data=mean_cl_normal, geom="errorbar")+ylab("Mean FFQ Score")+xlab("Country")+ggtitle("FFQ Scores (POTATOES, RICE & PASTA) in UK and Spain ")+  theme(legend.position = "none")
+
+# Delineate
+table(test_DOMINO$COUNTRY)
+
+# TESTING WHETHER SPAIN AND UK SIGNIFICANTLY DIFFER ON POTATOES, RICE & PASTA CONSUMPTION
+POL_DOMINO <- DOMINO_cat %>%
+  filter(COUNTRY == "Poland" & CATEGORY == "POTATOES, RICE & PASTA")
+test_DOMINO <- rbind(UK_DOMINO, POL_DOMINO)
+wilcox.test(test_DOMINO$FFQ ~ test_DOMINO$COUNTRY)
+
+ggplot(test_DOMINO, aes(COUNTRY,FFQ, color=COUNTRY))+stat_summary(fun.y=mean,geom="point")+
+    stat_summary(fun.data=mean_cl_normal, geom="errorbar")+ylab("Mean FFQ Score")+xlab("Country")+ggtitle("FFQ Scores (POTATOES, RICE & PASTA) in UK and Poland ")+  theme(legend.position = "none")
+
+# Delineate
+table(test_DOMINO$COUNTRY)
+
+# TESTING WHETHER SPAIN AND UK SIGNIFICANTLY DIFFER ON POTATOES, RICE & PASTA CONSUMPTION
+test_DOMINO <- rbind(SPAIN_DOMINO, POL_DOMINO)
+wilcox.test(test_DOMINO$FFQ ~ test_DOMINO$COUNTRY)
+
+ggplot(test_DOMINO, aes(COUNTRY,FFQ, color=COUNTRY))+stat_summary(fun.y=mean,geom="point")+
+    stat_summary(fun.data=mean_cl_normal, geom="errorbar")+ylab("Mean FFQ Score")+xlab("Country")+ggtitle("FFQ Scores (POTATOES, RICE & PASTA) in Spain and Poland")+  theme(legend.position = "none")
+
+# Delineate
+table(test_DOMINO$COUNTRY)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### SOUPS & SPREADS
+```{r}
+library(sm)
+sm.density(DOMINO_cat$FFQ, xlab = "FFQ Score")
+shapiro.test(DOMINO_cat$FFQ[0:5000])
+
+library(nortest)
+ad.test(DOMINO_cat$FFQ)
+
+# Significant result indicates data comes from a non-normal distribution (which matches the shape of the density plot)
+
+# tESTING WHETHER SPAIN AND UK SIGNIFICANTLY DIFFER ON SOUPS & SPREADS CONSUMPTION
+UK_DOMINO <- DOMINO_cat %>%
+  filter(COUNTRY == "UK" & CATEGORY == "SOUPS & SPREADS")
+SPAIN_DOMINO <- DOMINO_cat %>%
+  filter(COUNTRY == "Spain" & CATEGORY == "SOUPS & SPREADS")
+test_DOMINO <- rbind(UK_DOMINO, SPAIN_DOMINO)
+wilcox.test(test_DOMINO$FFQ ~ test_DOMINO$COUNTRY)
+
+ggplot(test_DOMINO, aes(COUNTRY,FFQ, color=COUNTRY))+stat_summary(fun.y=mean,geom="point")+
+    stat_summary(fun.data=mean_cl_normal, geom="errorbar")+ylab("Mean FFQ Score")+xlab("Country")+ggtitle("FFQ Scores (SOUPS & SPREADS) in UK and Spain ")+  theme(legend.position = "none")
+
+# Delineate
+table(test_DOMINO$COUNTRY)
+
+# TESTING WHETHER SPAIN AND UK SIGNIFICANTLY DIFFER ON SOUPS & SPREADS CONSUMPTION
+POL_DOMINO <- DOMINO_cat %>%
+  filter(COUNTRY == "Poland" & CATEGORY == "SOUPS & SPREADS")
+test_DOMINO <- rbind(UK_DOMINO, POL_DOMINO)
+wilcox.test(test_DOMINO$FFQ ~ test_DOMINO$COUNTRY)
+
+ggplot(test_DOMINO, aes(COUNTRY,FFQ, color=COUNTRY))+stat_summary(fun.y=mean,geom="point")+
+    stat_summary(fun.data=mean_cl_normal, geom="errorbar")+ylab("Mean FFQ Score")+xlab("Country")+ggtitle("FFQ Scores (SOUPS & SPREADS) in UK and Poland ")+  theme(legend.position = "none")
+
+# Delineate
+table(test_DOMINO$COUNTRY)
+
+# TESTING WHETHER SPAIN AND UK SIGNIFICANTLY DIFFER ON SOUPS & SPREADS CONSUMPTION
+test_DOMINO <- rbind(SPAIN_DOMINO, POL_DOMINO)
+wilcox.test(test_DOMINO$FFQ ~ test_DOMINO$COUNTRY)
+
+ggplot(test_DOMINO, aes(COUNTRY,FFQ, color=COUNTRY))+stat_summary(fun.y=mean,geom="point")+
+    stat_summary(fun.data=mean_cl_normal, geom="errorbar")+ylab("Mean FFQ Score")+xlab("Country")+ggtitle("FFQ Scores (SOUPS & SPREADS) in Spain and Poland")+  theme(legend.position = "none")
+
+# Delineate
+table(test_DOMINO$COUNTRY)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### SWEETS & SNACKS
+```{r}
+library(sm)
+sm.density(DOMINO_cat$FFQ, xlab = "FFQ Score")
+shapiro.test(DOMINO_cat$FFQ[0:5000])
+
+library(nortest)
+ad.test(DOMINO_cat$FFQ)
+
+# Significant result indicates data comes from a non-normal distribution (which matches the shape of the density plot)
+
+# tESTING WHETHER SPAIN AND UK SIGNIFICANTLY DIFFER ON SWEETS & SNACKS CONSUMPTION
+UK_DOMINO <- DOMINO_cat %>%
+  filter(COUNTRY == "UK" & CATEGORY == "SWEETS & SNACKS")
+SPAIN_DOMINO <- DOMINO_cat %>%
+  filter(COUNTRY == "Spain" & CATEGORY == "SWEETS & SNACKS")
+test_DOMINO <- rbind(UK_DOMINO, SPAIN_DOMINO)
+wilcox.test(test_DOMINO$FFQ ~ test_DOMINO$COUNTRY)
+
+ggplot(test_DOMINO, aes(COUNTRY,FFQ, color=COUNTRY))+stat_summary(fun.y=mean,geom="point")+
+    stat_summary(fun.data=mean_cl_normal, geom="errorbar")+ylab("Mean FFQ Score")+xlab("Country")+ggtitle("FFQ Scores (SWEETS & SNACKS) in UK and Spain ")+  theme(legend.position = "none")
+
+# Delineate
+table(test_DOMINO$COUNTRY)
+
+# TESTING WHETHER SPAIN AND UK SIGNIFICANTLY DIFFER ON SWEETS & SNACKS CONSUMPTION
+POL_DOMINO <- DOMINO_cat %>%
+  filter(COUNTRY == "Poland" & CATEGORY == "SWEETS & SNACKS")
+test_DOMINO <- rbind(UK_DOMINO, POL_DOMINO)
+wilcox.test(test_DOMINO$FFQ ~ test_DOMINO$COUNTRY)
+
+ggplot(test_DOMINO, aes(COUNTRY,FFQ, color=COUNTRY))+stat_summary(fun.y=mean,geom="point")+
+    stat_summary(fun.data=mean_cl_normal, geom="errorbar")+ylab("Mean FFQ Score")+xlab("Country")+ggtitle("FFQ Scores (SWEETS & SNACKS) in UK and Poland ")+  theme(legend.position = "none")
+
+# Delineate
+table(test_DOMINO$COUNTRY)
+
+# TESTING WHETHER SPAIN AND UK SIGNIFICANTLY DIFFER ON SWEETS & SNACKS CONSUMPTION
+test_DOMINO <- rbind(SPAIN_DOMINO, POL_DOMINO)
+wilcox.test(test_DOMINO$FFQ ~ test_DOMINO$COUNTRY)
+
+ggplot(test_DOMINO, aes(COUNTRY,FFQ, color=COUNTRY))+stat_summary(fun.y=mean,geom="point")+
+    stat_summary(fun.data=mean_cl_normal, geom="errorbar")+ylab("Mean FFQ Score")+xlab("Country")+ggtitle("FFQ Scores (SWEETS & SNACKS) in Spain and Poland")+  theme(legend.position = "none")
+
+# Delineate
+table(test_DOMINO$COUNTRY)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### TOPPING
+```{r}
+library(sm)
+sm.density(DOMINO_cat$FFQ, xlab = "FFQ Score")
+shapiro.test(DOMINO_cat$FFQ[0:5000])
+
+library(nortest)
+ad.test(DOMINO_cat$FFQ)
+
+# Significant result indicates data comes from a non-normal distribution (which matches the shape of the density plot)
+
+# tESTING WHETHER SPAIN AND UK SIGNIFICANTLY DIFFER ON TOPPING CONSUMPTION
+UK_DOMINO <- DOMINO_cat %>%
+  filter(COUNTRY == "UK" & CATEGORY == "TOPPING")
+SPAIN_DOMINO <- DOMINO_cat %>%
+  filter(COUNTRY == "Spain" & CATEGORY == "TOPPING")
+test_DOMINO <- rbind(UK_DOMINO, SPAIN_DOMINO)
+wilcox.test(test_DOMINO$FFQ ~ test_DOMINO$COUNTRY)
+
+ggplot(test_DOMINO, aes(COUNTRY,FFQ, color=COUNTRY))+stat_summary(fun.y=mean,geom="point")+
+    stat_summary(fun.data=mean_cl_normal, geom="errorbar")+ylab("Mean FFQ Score")+xlab("Country")+ggtitle("FFQ Scores (TOPPING) in UK and Spain ")+  theme(legend.position = "none")
+
+# Delineate
+table(test_DOMINO$COUNTRY)
+
+# TESTING WHETHER SPAIN AND UK SIGNIFICANTLY DIFFER ON TOPPING CONSUMPTION
+POL_DOMINO <- DOMINO_cat %>%
+  filter(COUNTRY == "Poland" & CATEGORY == "TOPPING")
+test_DOMINO <- rbind(UK_DOMINO, POL_DOMINO)
+wilcox.test(test_DOMINO$FFQ ~ test_DOMINO$COUNTRY)
+
+ggplot(test_DOMINO, aes(COUNTRY,FFQ, color=COUNTRY))+stat_summary(fun.y=mean,geom="point")+
+    stat_summary(fun.data=mean_cl_normal, geom="errorbar")+ylab("Mean FFQ Score")+xlab("Country")+ggtitle("FFQ Scores (TOPPING) in UK and Poland ")+  theme(legend.position = "none")
+
+# Delineate
+table(test_DOMINO$COUNTRY)
+
+# TESTING WHETHER SPAIN AND UK SIGNIFICANTLY DIFFER ON TOPPING CONSUMPTION
+test_DOMINO <- rbind(SPAIN_DOMINO, POL_DOMINO)
+wilcox.test(test_DOMINO$FFQ ~ test_DOMINO$COUNTRY)
+
+ggplot(test_DOMINO, aes(COUNTRY,FFQ, color=COUNTRY))+stat_summary(fun.y=mean,geom="point")+
+    stat_summary(fun.data=mean_cl_normal, geom="errorbar")+ylab("Mean FFQ Score")+xlab("Country")+ggtitle("FFQ Scores (TOPPING) in Spain and Poland")+  theme(legend.position = "none")
+
+# Delineate
+table(test_DOMINO$COUNTRY)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
