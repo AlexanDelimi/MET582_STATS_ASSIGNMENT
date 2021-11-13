@@ -41,16 +41,17 @@ DOMINO[DOMINO == -9] <- NA
 DOMINO[DOMINO == -8] <- NA
 
 ### Add participant IDs
-DOMINO$ID <- seq.int(nrow(DOMINO))
-DOMINO %>%
+DOMINO1 <- DOMINO
+DOMINO1$ID <- seq.int(nrow(DOMINO1))
+DOMINO1 <- DOMINO1 %>%
   select(COUNTRY, ID, BEEF:OLIVES)
-summary(DOMINO)
+summary(DOMINO1)
 ```
 
 ### Making a Summary Plot
 ```{r, fig.width=18, fig.height=8}
 ### Make summary plot showing food type by FFQ score, coloured by country.
-DOMINO_grouped <- pivot_longer(data = DOMINO, cols = BEEF:OLIVES, names_to = "FOOD", values_to = "FFQ")
+DOMINO_grouped <- pivot_longer(data = DOMINO1, cols = BEEF:OLIVES, names_to = "FOOD", values_to = "FFQ")
 
 food_plot <- ggplot (data = DOMINO_grouped, mapping = aes(x = FOOD, y = FFQ)) + 
   geom_col(aes(fill = COUNTRY)) +
@@ -67,57 +68,57 @@ print(food_plot)
 ### Grouping food data by category.
 ```{r, include=TRUE, echo = FALSE, error=FALSE, warning=FALSE}
 #### Group by major food groups.
-MeatFish <- DOMINO %>%
+MeatFish <- DOMINO1 %>%
   select(COUNTRY, ID, BEEF:TROUT) %>%
   pivot_longer(cols = BEEF:TROUT, names_to = "FOOD", values_to = "FFQ") %>%
   add_column(CATEGORY = "MEAT & FISH")
 
-Bread <- DOMINO %>%
+Bread <- DOMINO1 %>%
   select(COUNTRY, ID, WHTBREADSL:RYEBRD) %>%
   pivot_longer(cols = WHTBREADSL:RYEBRD, names_to = "FOOD", values_to = "FFQ") %>%
   add_column(CATEGORY = "BREAD & BISCUITS")
 
-Cereals <- DOMINO %>%
+Cereals <- DOMINO1 %>%
   select(COUNTRY, ID, PORRIDGE:CEREALMUS) %>%
   pivot_longer(cols = PORRIDGE:CEREALMUS, names_to = "FOOD", values_to = "FFQ") %>%
   add_column(CATEGORY = "CEREALS")
 
-PotRicPas <- DOMINO %>%
+PotRicPas <- DOMINO1 %>%
   select(COUNTRY, ID, POTSPREP:BARLYGRO) %>%
   pivot_longer(cols = POTSPREP:BARLYGRO, names_to = "FOOD", values_to = "FFQ") %>%
   add_column(CATEGORY = "POTATOES, RICE & PASTA")
 
-DairyFats <- DOMINO %>%
+DairyFats <- DOMINO1 %>%
   select(COUNTRY, ID, SICREAM:OTHSALAD) %>%
   pivot_longer(cols = SICREAM:OTHSALAD, names_to = "FOOD", values_to = "FFQ") %>%
   add_column(CATEGORY = "DAIRY & FATS")
 
-OnBreadVeg <- DOMINO %>%
+OnBreadVeg <- DOMINO1 %>%
   select(COUNTRY, ID, BUTTERMILK:VLOWSPREAD) %>%
   pivot_longer(cols = BUTTERMILK:VLOWSPREAD, names_to = "FOOD", values_to = "FFQ") %>%
   add_column(CATEGORY = "TOPPING")
 
-SweetSnacks <- DOMINO %>%
+SweetSnacks <- DOMINO1 %>%
   select(COUNTRY, ID, SWBISCHO:JELLY) %>%
   pivot_longer(cols = SWBISCHO:JELLY, names_to = "FOOD", values_to = "FFQ") %>%
   add_column(CATEGORY = "SWEETS & SNACKS")
 
-SoupsSpreads <- DOMINO %>%
+SoupsSpreads <- DOMINO1 %>%
   select(COUNTRY, ID, VEGSOUP:COLDSOUP) %>%
   pivot_longer(cols = VEGSOUP:COLDSOUP, names_to = "FOOD", values_to = "FFQ") %>%
   add_column(CATEGORY = "SOUPS & SPREADS")
 
-Drinks <- DOMINO %>%
+Drinks <- DOMINO1 %>%
   select(COUNTRY, ID, TEA:TOMJUICE) %>%
   pivot_longer(cols = TEA:TOMJUICE, names_to = "FOOD", values_to = "FFQ") %>%
   add_column(CATEGORY = "DRINKS")
 
-Fruit <- DOMINO %>%
+Fruit <- DOMINO1 %>%
   select(COUNTRY, ID, APPLES:BLACKCURR) %>%
   pivot_longer(cols = APPLES:BLACKCURR, names_to = "FOOD", values_to = "FFQ") %>%
   add_column(CATEGORY = "FRUIT")
 
-Veg <- DOMINO %>%
+Veg <- DOMINO1 %>%
   select(COUNTRY, ID, CARPUMP:OLIVES) %>%
   pivot_longer(cols = CARPUMP:OLIVES, names_to = "FOOD", values_to = "FFQ") %>%
   add_column(CATEGORY = "VEG")
@@ -172,8 +173,12 @@ print(cat_violin)
 ```
 
 
-# Meeting 2
 
+
+# Meeting 2
+Please note that although multiple Wilcoxen tests have been used to test for significant differences in the data (food category by country), no correction for multiple comparisons have been performed as of yet. These anslyses were completed as part of a lecture on hypothesis testing in our statistics module.
+
+## A Start on Significance Testing 
 ### VEG
 ```{r}
 library(sm)
@@ -811,18 +816,52 @@ ggplot(test_DOMINO, aes(COUNTRY,FFQ, color=COUNTRY))+stat_summary(fun.y=mean,geo
 table(test_DOMINO$COUNTRY)
 ```
 
+## Attempting a PCA Analysis:
+
+```{r}
+library(tibble)
+library(devtools)
+library(ggbiplot)
+
+# PCA with all food types
+DOMINO_food <- DOMINO_grouped %>%
+  na.omit() %>%
+  pivot_wider(id_cols = COUNTRY:ID, names_from = FOOD, values_from = FFQ) %>%
+  select(BEEF:OLIVES)
+ 
+DOMINO_pca <- prcomp(DOMINO_food, center = TRUE, scale. = TRUE)
+
+summary(DOMINO_pca)
+DOMINO_countries <- c(rep("UK", 10), rep("Switzerland", 2), rep("Poland", 18), rep("Spain", 30))
+DOMINO_bp <- ggbiplot(DOMINO_pca, ellipse = TRUE,  groups = DOMINO_countries)
+print(DOMINO_bp)
+
+# Lots of labels so try with categories. 
+DOMINO_wide <- DOMINO_cat %>%
+  na.omit() %>%
+  select(-FOOD) %>%
+  pivot_wider(id_cols = ID:COUNTRY, names_from = CATEGORY, values_from = FFQ, values_fn = sum) %>%
+  select(3:13)
+
+DOMINO_cat_pca <- prcomp(DOMINO_wide, center = TRUE, scale. = TRUE)
+summary(DOMINO_cat_pca)
+DOMINO_cat_bp <- ggbiplot(DOMINO_cat_pca, ellipse = TRUE,  groups = DOMINO_countries)
+print(DOMINO_cat_bp)
+```
 
 
 
-
-
-
-
-
-
-
-
-
-
-
+## Summary of food category Information.
+```{r}
+summary(DOMINO_wide)
+mean_cat_plot <- ggplot (data = DOMINO_cat, mapping = aes(x = CATEGORY, y = FFQ)) + 
+  geom_col(aes(fill = COUNTRY), position = "dodge", stat = "mean") +
+  labs(title = "Cross-cultural Nutrional Differences by Food Category") +
+  xlab("Food Category") +
+  ylab("Mean FFQ Score") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1)) +
+  scale_fill_brewer(palette="Spectral")
+print(mean_cat_plot)
+```
 
