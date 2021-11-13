@@ -1,0 +1,116 @@
+---
+title: "median_comparisons"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load data
+```{r, echo = FALSE, warning = FALSE}
+library(tidyverse)
+setwd("~/Documents")
+DOMINO <- read_csv(file = "FFQ_for_MET582.csv", col_names = TRUE, na = "NA") %>%
+  select(COUNTRY:OLIVES)
+DOMINO[DOMINO == -9] <- NA
+DOMINO[DOMINO == -8] <- NA
+```
+
+## Add food group category to DOMINO
+```{r, echo = FALSE}
+#### Group by major food groups by adding category column to DOMINO table
+MF <- colnames(DOMINO)[2:28]
+BSB <- colnames(DOMINO)[29:35]
+C <- colnames(DOMINO)[36:39]
+PRP <- colnames(DOMINO)[40:57]
+DF <- colnames(DOMINO)[58:79]
+OBV <- colnames(DOMINO)[80:88]
+SwS <- colnames(DOMINO)[89:115]
+SSS <- colnames(DOMINO)[116:128]
+D <- colnames(DOMINO)[129:146]
+Fr <- colnames(DOMINO)[147:163]
+V <- colnames(DOMINO)[164:196]
+
+DOMINO_category <- pivot_longer(DOMINO, -COUNTRY, names_to = "FOOD", values_to = "FFQ") %>%
+mutate(category = case_when(FOOD %in% MF ~ "meat_fish",
+                            FOOD %in% BSB ~ "bread_sav_biscuits",
+                            FOOD %in% C ~ "cereals",
+                            FOOD %in% PRP ~ "potatoes_rice_pasta",
+                            FOOD %in% DF ~ "dairy_fats",
+                            FOOD %in% OBV ~ "on_bread_veg",
+                            FOOD %in% SwS ~ "sweets_snacks",
+                            FOOD %in% SSS ~ "soups_sauces_spreads",
+                            FOOD %in% D ~ "drinks",
+                            FOOD %in% Fr ~ "fruits",
+                            FOOD %in% V ~ "vegetables"))
+```
+
+## Box plots of each food group
+```{r}
+foodgroup_boxplot <- function(cat) {
+  DOMINO_category %>%
+    filter(category == cat) %>%
+    ggplot(aes(x = COUNTRY, y = FFQ, colour = COUNTRY)) +
+    geom_boxplot() +
+    theme_bw()
+}
+print(foodgroup_boxplot("meat_fish") + labs(title= "Meat and fish intake by country"))
+print(foodgroup_boxplot("bread_sav_biscuits") + labs(title= "Bread and savoury biscuits intake by country"))
+print(foodgroup_boxplot("cereals") + labs(title= "Cereals intake by country"))
+print(foodgroup_boxplot("potatoes_rice_pasta") + labs(title= "Potatoes, rice and pasta intake by country"))
+print(foodgroup_boxplot("dairy_fats") + labs(title= "Dairy and fat intake by country"))
+print(foodgroup_boxplot("on_bread_veg") + labs(title= "Foods on bread and vegetables intake by country"))
+print(foodgroup_boxplot("sweets_snacks") + labs(title= "Sweet and snack intake by country"))
+print(foodgroup_boxplot("soups_sauces_spreads") + labs(title= "Soups, sauces and spreads intake by country"))
+print(foodgroup_boxplot("drinks") + labs(title= "Drink intake by country"))
+print(foodgroup_boxplot("fruits") + labs(title= "Fruit intake by country"))
+print(foodgroup_boxplot("vegetables") + labs(title= "Vegetable intake by country"))
+```
+
+## Kruskal-Wallis tests within groups (needs to be corrected for multiple tests)
+```{r, echo = FALSE}
+DOMINO_MF <- filter(DOMINO_category, category == "meat_fish")
+KW_MF <- kruskal.test(FFQ ~ COUNTRY, data = DOMINO_MF)
+
+DOMINO_BSB <- filter(DOMINO_category, category == "bread_sav_biscuits")
+KW_BSB <- kruskal.test(FFQ ~ COUNTRY, data = DOMINO_BSB)
+
+DOMINO_C <- filter(DOMINO_category, category == "cereals")
+KW_C <- kruskal.test(FFQ ~ COUNTRY, data = DOMINO_C)
+
+DOMINO_PRP <- filter(DOMINO_category, category == "potatoes_rice_pasta")
+KW_PRP <- kruskal.test(FFQ ~ COUNTRY, data = DOMINO_PRP)
+
+DOMINO_DF <- filter(DOMINO_category, category == "dairy_fats")
+KW_DF <- kruskal.test(FFQ ~ COUNTRY, data = DOMINO_DF)
+
+DOMINO_OBV <- filter(DOMINO_category, category == "on_bread_veg")
+KW_OBV <- kruskal.test(FFQ ~ COUNTRY, data = DOMINO_OBV)
+
+DOMINO_SwS <- filter(DOMINO_category, category == "sweets_snacks")
+KW_SwS <- kruskal.test(FFQ ~ COUNTRY, data = DOMINO_SwS)
+
+DOMINO_SSS <- filter(DOMINO_category, category == "soups_sauces_spreads")
+KW_SSS <- kruskal.test(FFQ ~ COUNTRY, data = DOMINO_SSS)
+
+DOMINO_D <- filter(DOMINO_category, category == "drinks")
+KW_D <- kruskal.test(FFQ ~ COUNTRY, data = DOMINO_D)
+
+DOMINO_Fr <- filter(DOMINO_category, category == "fruits")
+KW_Fr <- kruskal.test(FFQ ~ COUNTRY, data = DOMINO_Fr)
+
+DOMINO_V <- filter(DOMINO_category, category == "vegetables")
+KW_V <- kruskal.test(FFQ ~ COUNTRY, data = DOMINO_V)
+
+KW_p <- c(KW_MF$p.value, KW_BSB$p.value, KW_C$p.value, KW_PRP$p.value, KW_DF$p.value,
+          KW_OBV$p.value, KW_SwS$p.value, KW_SSS$p.value, KW_D$p.value, KW_Fr$p.value,
+          KW_V$p.value)
+food_categories <- c("meat_fish", "bread_sav_biscuits", "cereals", "potatoes_rice_pasta",
+                     "dairy_fats", "on_bread_veg", "sweets_snacks", "soups_sauces_spreads",
+                     "drinks", "fruits", "vegetables")
+KW_p_category <- tibble(food_categories, KW_p)
+KW_p_category
+```
