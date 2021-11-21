@@ -1,0 +1,114 @@
+---
+title: "k means clustering and pca"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load data
+```{r, echo = FALSE, warning = FALSE}
+library(tidyverse)
+setwd("~/Documents")
+DOMINO <- read_csv(file = "FFQ_for_MET582.csv", col_names = TRUE, na = "NA") %>%
+  select(COUNTRY:OLIVES)
+DOMINO[DOMINO == -9] <- NA
+DOMINO[DOMINO == -8] <- NA
+DOMINO2 <- rowid_to_column(DOMINO, "PARTICIPANT")
+```
+
+## Add food group category to DOMINO
+```{r, echo = FALSE, warning = FALSE}
+#### Group by major food groups by adding category column to DOMINO table
+MF <- colnames(DOMINO2)[3:29]
+BSB <- colnames(DOMINO2)[30:36]
+C <- colnames(DOMINO2)[37:40]
+PRP <- colnames(DOMINO2)[41:58]
+DF <- colnames(DOMINO2)[59:80]
+OBV <- colnames(DOMINO2)[81:89]
+SwS <- colnames(DOMINO2)[90:116]
+SSS <- colnames(DOMINO2)[117:129]
+D <- colnames(DOMINO2)[130:147]
+Fr <- colnames(DOMINO2)[148:164]
+V <- colnames(DOMINO2)[165:197]
+
+DOMINO_category <- pivot_longer(DOMINO2, BEEF:OLIVES, names_to = "FOOD", values_to = "FFQ") %>%
+mutate(category = case_when(FOOD %in% MF ~ "meat_fish",
+                            FOOD %in% BSB ~ "bread_sav_biscuits",
+                            FOOD %in% C ~ "cereals",
+                            FOOD %in% PRP ~ "potatoes_rice_pasta",
+                            FOOD %in% DF ~ "dairy_fats",
+                            FOOD %in% OBV ~ "on_bread_veg",
+                            FOOD %in% SwS ~ "sweets_snacks",
+                            FOOD %in% SSS ~ "soups_sauces_spreads",
+                            FOOD %in% D ~ "drinks",
+                            FOOD %in% Fr ~ "fruits",
+                            FOOD %in% V ~ "vegetables")) 
+```
+
+## PCA for food categories
+```{r, echo = TRUE, warning = FALSE}
+DOMINO_category_wide <- DOMINO_category %>%
+  na.omit() %>%
+  select(-FOOD) %>%
+  pivot_wider(id_cols = PARTICIPANT:COUNTRY, names_from = category, values_from = FFQ, values_fn = sum)
+
+library(devtools)
+library(ggbiplot)
+DOMINO_cat.pca <- prcomp(select(DOMINO_category_wide, -COUNTRY, -PARTICIPANT), center = TRUE, scale. = TRUE)
+summary(DOMINO_cat.pca)
+# Plot PC1 against PC2
+ggbiplot(DOMINO_cat.pca, ellipse = TRUE, obs.scale= 1, labels = DOMINO_category_wide$PARTICIPANT, 
+         groups = DOMINO_category_wide$COUNTRY) +
+  theme_bw()
+
+# Plot PC1 against PC3
+ggbiplot(DOMINO_cat.pca, choices = c(1,3), ellipse = TRUE, obs.scale= 1, labels =
+           DOMINO_category_wide$PARTICIPANT, groups = DOMINO_category_wide$COUNTRY) +
+  theme_bw()
+
+# Plot PC2 against PC3
+ggbiplot(DOMINO_cat.pca, choices = c(2,3), ellipse = TRUE, obs.scale= 1, labels =
+           DOMINO_category_wide$PARTICIPANT, groups = DOMINO_category_wide$COUNTRY) +
+  theme_bw()
+```
+
+## K means clustering for food categories
+```{r, echo = TRUE, warning = FALSE}
+DOMINO_category_wide2 <- DOMINO_category %>%
+  na.omit() %>%
+  select(-FOOD) %>%
+  pivot_wider(id_cols = PARTICIPANT:COUNTRY, names_from = category, values_from = FFQ, values_fn = sum) 
+DOMINO_category_wide2[c(3:13)] <- scale(DOMINO_category_wide2[c(3:13)])
+
+k1 <- kmeans(select(DOMINO_category_wide2, -PARTICIPANT, -COUNTRY), centers = 1)
+k2 <- kmeans(select(DOMINO_category_wide2, -PARTICIPANT, -COUNTRY), centers = 2)
+k3 <- kmeans(select(DOMINO_category_wide2, -PARTICIPANT, -COUNTRY), centers = 3)
+k4 <- kmeans(select(DOMINO_category_wide2, -PARTICIPANT, -COUNTRY), centers = 4)
+k5 <- kmeans(select(DOMINO_category_wide2, -PARTICIPANT, -COUNTRY), centers = 5)
+k6 <- kmeans(select(DOMINO_category_wide2, -PARTICIPANT, -COUNTRY), centers = 6)
+
+k1_wss <- k1$tot.withinss
+k2_wss <- k2$tot.withinss
+k3_wss <- k3$tot.withinss
+k4_wss <- k4$tot.withinss
+k5_wss <- k5$tot.withinss
+k6_wss <- k6$tot.withinss
+
+tot.withinss <- c(k1_wss, k2_wss, k3_wss, k4_wss, k5_wss, k6_wss)
+k <- c(1L, 2L, 3L, 4L, 5L, 6L)
+kmeans_plot <- tibble(k, tot.withinss)
+
+ggplot(kmeans_plot) +
+  geom_point(aes(x = k, y = tot.withinss)) +
+  theme_bw()
+
+# Compute k-means with k = 4
+# https://www.datanovia.com/en/lessons/k-means-clustering-in-r-algorith-and-practical-examples/
+set.seed(123)
+km.res <- kmeans(select(DOMINO_category_wide2, -PARTICIPANT, -COUNTRY), 4, nstart = 25)
+print(km.res)
+km_clusters <- cbind(DOMINO_category_wide2, cluster = km.res$cluster)
+head(km_clusters)
+```
