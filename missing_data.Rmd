@@ -1,0 +1,164 @@
+---
+title: "missing data"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load data
+```{r, echo = FALSE, warning = FALSE}
+library(tidyverse)
+setwd("~/Documents")
+DOMINO <- read_csv(file = "FFQ_for_MET582.csv", col_names = TRUE, na = "NA") %>%
+  select(COUNTRY:OLIVES)
+DOMINO[DOMINO == -9] <- NA
+DOMINO[DOMINO == -8] <- NA
+```
+
+## Missing data plot for UK
+```{r, warning = FALSE}
+missing_data_UK <- filter(DOMINO, COUNTRY == "UK") %>%
+    gather(key = "Food_group", value = "val") %>%
+    mutate(is.missing = is.na(val)) %>%
+    group_by(Food_group, is.missing) %>%
+    summarise(n_missing_UK = n()) %>%
+    filter(is.missing == T) %>%
+    select(-is.missing) %>%
+    arrange(desc(n_missing_UK)) 
+###:https://jenslaufer.com/data/analysis/visualize_missing_values_with_ggplot.html
+
+missing_data_UK$proportion_missing_UK <- missing_data_UK$n_missing_UK / nrow(filter(DOMINO, COUNTRY == "UK"))
+
+missing_data_UK %>%
+  ggplot() +
+    geom_bar(aes(x = Food_group, y = n_missing_UK), stat = "identity") +
+    labs(x = "Food group", y = "Number of missing values", title = "Number of missing values for UK by food group") +
+  theme_bw()
+
+missing_data_UK %>%
+  ggplot() +
+    geom_col(aes(x = Food_group, y = proportion_missing_UK)) +
+    labs(x = "Food group", y = "Proportion of missing values", title = "Proportion of missing values for UK by food group") +
+  theme_bw()
+```
+
+## Missing data plot for Switzerland
+```{r, warning = FALSE}
+missing_data_Sw <- filter(DOMINO, COUNTRY == "Switzerland") %>%
+    gather(key = "Food_group", value = "val") %>%
+    mutate(is.missing = is.na(val)) %>%
+    group_by(Food_group, is.missing) %>%
+    summarise(n_missing_Sw = n()) %>%
+    filter(is.missing == T) %>%
+    select(-is.missing) %>%
+    arrange(desc(n_missing_Sw)) 
+###:https://jenslaufer.com/data/analysis/visualize_missing_values_with_ggplot.html
+
+missing_data_Sw$proportion_missing_Sw <- missing_data_Sw$n_missing_Sw / nrow(filter(DOMINO, COUNTRY == "Switzerland"))
+
+missing_data_Sw %>%
+  ggplot() +
+    geom_bar(aes(x = Food_group, y = n_missing_Sw), stat = "identity") +
+    labs(x = "Food group", y = "Number of missing values", title = "Number of missing values for Switzerland by food group") +
+  theme_bw()
+
+missing_data_Sw %>%
+  ggplot() +
+    geom_col(aes(x = Food_group, y = proportion_missing_Sw)) +
+    labs(x = "Food group", y = "Proportion of missing values", title = "Proportion of missing values for Switzerland by food group") +
+  theme_bw()
+```
+
+## Missing data plot for Poland
+```{r, warning = FALSE}
+missing_data_Po <- filter(DOMINO, COUNTRY == "Poland") %>%
+    gather(key = "Food_group", value = "val") %>%
+    mutate(is.missing = is.na(val)) %>%
+    group_by(Food_group, is.missing) %>%
+    summarise(n_missing_Po = n()) %>%
+    filter(is.missing == T) %>%
+    select(-is.missing) %>%
+    arrange(desc(n_missing_Po)) 
+###:https://jenslaufer.com/data/analysis/visualize_missing_values_with_ggplot.html
+
+missing_data_Po$proportion_missing_Po <- missing_data_Po$n_missing_Po / nrow(filter(DOMINO, COUNTRY == "Poland"))
+
+missing_data_Po %>%
+  ggplot() +
+    geom_bar(aes(x = Food_group, y = n_missing_Po), stat = "identity") +
+    labs(x = "Food group", y = "Number of missing values", title = "Number of missing values for Poland by food group") +
+  theme_bw()
+
+missing_data_Po %>%
+  ggplot() +
+    geom_col(aes(x = Food_group, y = proportion_missing_Po)) +
+    labs(x = "Food group", y = "Proportion of missing values", title = "Proportion of missing values for Poland by food group") +
+  theme_bw()
+```
+## Missing data plot for Spain
+```{r, warning = FALSE}
+missing_data_Sp <- filter(DOMINO, COUNTRY == "Spain") %>%
+    gather(key = "Food_group", value = "val") %>%
+    mutate(is.missing = is.na(val)) %>%
+    group_by(Food_group, is.missing) %>%
+    summarise(n_missing_Sp = n()) %>%
+    filter(is.missing == T) %>%
+    select(-is.missing) %>%
+    arrange(desc(n_missing_Sp)) 
+###:https://jenslaufer.com/data/analysis/visualize_missing_values_with_ggplot.html
+
+missing_data_Sp$proportion_missing_Sp <- missing_data_Sp$n_missing_Sp / nrow(filter(DOMINO, COUNTRY == "Spain"))
+
+missing_data_Sp %>%
+  ggplot() +
+    geom_bar(aes(x = Food_group, y = n_missing_Sp), stat = "identity") +
+    labs(x = "Food group", y = "Number of missing values", title = "Number of missing values for Spain by food group") +
+  theme_bw()
+
+missing_data_Sp %>%
+  ggplot() +
+    geom_col(aes(x = Food_group, y = proportion_missing_Sp)) +
+    labs(x = "Food group", y = "Proportion of missing values", title = "Proportion of missing values for Spain by food group") +
+  theme_bw()
+```
+
+## Missing data for all food groups
+```{r, warning = FALSE}
+proportion_missing <- colSums(is.na(DOMINO)) / nrow(DOMINO)
+Food_group <- colnames(DOMINO) 
+missing_data_country <- tibble(Food_group, proportion_missing) %>%
+  filter(Food_group != "COUNTRY")
+
+missing_data_country %>%
+  ggplot(aes(x = Food_group, y = proportion_missing)) +
+  geom_col() +
+  geom_text(aes(label = ifelse(proportion_missing > 0, as.character(Food_group), ''))) +
+  labs(x = "Food group", 
+       y = "proportion of values missing", 
+       title = "Proportion of values which are missing for each food group across all countries")+
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1))
+```
+
+## Missing data for all food groups including country data
+```{r, warning = FALSE}
+missing_all_countries <- full_join(missing_data_UK, missing_data_Sw, by = "Food_group") %>%
+  full_join(missing_data_Po) %>%
+  full_join(missing_data_Sp) %>%
+  select("Food_group", !contains("proportion"))
+missing_all_countries[is.na(missing_all_countries)] <- 0
+colnames(missing_all_countries) <- c("Food_group", "UK", "Switzerland", "Poland", "Spain")
+missing_all_countries2 <- pivot_longer(missing_all_countries, cols = 2:5, names_to = "Country", values_to = "n_missing") %>%
+  mutate(proportion_missing = n_missing / nrow(DOMINO))
+
+missing_all_countries2 %>%
+  ggplot(aes(x = Food_group, y = proportion_missing, fill = Country)) +
+  geom_col() +
+  labs(x = "Food group", 
+       y = "proportion of values missing", 
+       title = "Proportion of values which are missing for each food group across all countries")+
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1))
+```
