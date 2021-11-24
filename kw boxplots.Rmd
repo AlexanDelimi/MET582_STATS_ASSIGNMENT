@@ -1,0 +1,187 @@
+---
+title: "kw and boxplots"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load data
+```{r, echo = FALSE, warning = FALSE}
+library(tidyverse)
+setwd("~/Documents")
+DOMINO <- read_csv(file = "FFQ_for_MET582.csv", col_names = TRUE, na = "NA") %>%
+  select(COUNTRY:OLIVES)
+
+DOMINO[DOMINO == -9] <- NA
+DOMINO[DOMINO == -8] <- NA
+DOMINO[DOMINO == 1] <- 0
+DOMINO[DOMINO == 2] <- 0.067
+DOMINO[DOMINO == 3] <- 0.143
+DOMINO[DOMINO == 4] <- 0.429
+DOMINO[DOMINO == 5] <- 0.756
+DOMINO[DOMINO == 6] <- 1
+DOMINO[DOMINO == 7] <- 2.5
+DOMINO[DOMINO == 8] <- 4.5
+DOMINO[DOMINO == 9] <- 6
+
+DOMINO <- rowid_to_column(DOMINO, "PARTICIPANT")
+```
+
+## Add food group category to DOMINO
+```{r, echo = FALSE}
+#### Group by major food groups by adding category column to DOMINO table
+MF <- colnames(DOMINO)[2:28]
+BSB <- colnames(DOMINO)[29:35]
+C <- colnames(DOMINO)[36:39]
+PRP <- colnames(DOMINO)[40:57]
+DF <- colnames(DOMINO)[58:79]
+OBV <- colnames(DOMINO)[80:88]
+SwS <- colnames(DOMINO)[89:115]
+SSS <- colnames(DOMINO)[116:128]
+D <- colnames(DOMINO)[129:146]
+Fr <- colnames(DOMINO)[147:163]
+V <- colnames(DOMINO)[164:196]
+
+DOMINO_category <- pivot_longer(DOMINO, BEEF:OLIVES, names_to = "FOOD", values_to = "daily_FFQ_score") %>%
+  mutate(category = case_when(FOOD %in% MF ~ "meat_fish",
+                            FOOD %in% BSB ~ "bread_sav_biscuits",
+                            FOOD %in% C ~ "cereals",
+                            FOOD %in% PRP ~ "potatoes_rice_pasta",
+                            FOOD %in% DF ~ "dairy_fats",
+                            FOOD %in% OBV ~ "on_bread_veg",
+                            FOOD %in% SwS ~ "sweets_snacks",
+                            FOOD %in% SSS ~ "soups_sauces_spreads",
+                            FOOD %in% D ~ "drinks",
+                            FOOD %in% Fr ~ "fruits",
+                            FOOD %in% V ~ "vegetables")) 
+```
+
+## Test data normality
+```{r}
+library(ggplot2)
+ggplot(data = DOMINO_category) +
+  geom_histogram(aes(x = daily_FFQ_score), binwidth = 1) +
+  theme_bw()
+
+qqnorm(DOMINO_category$daily_FFQ_score, pch = 1, frame = FALSE)
+```
+
+Anderson-Darling test for normality used as DOMINO_category daily data contains more than 5000  values.
+
+H0: data are normally distributed
+
+H1: data are not normally distributed
+```{r}
+library(nortest)
+ad.test(DOMINO_category$daily_FFQ_score)
+```
+p-value < 0.05, therefore accept the alternate hypothesis.
+
+All three of these measures of normality indicate that the data are not normally distributed so non-parametric statistical tests should be used for analyses.
+
+## Kruskal-Wallis tests within groups
+
+Kruskal-Wallis tests used as the data is non-parametric and ordinal.
+
+H0: median food intake does not differ between countries for each food category
+
+H1: median food intake does differ between countries for each food category
+
+```{r, echo = FALSE}
+DOMINO_MF <- filter(DOMINO_category, category == "meat_fish")
+KW_MF <- kruskal.test(daily_FFQ_score ~ COUNTRY, data = DOMINO_MF)
+
+DOMINO_BSB <- filter(DOMINO_category, category == "bread_sav_biscuits")
+KW_BSB <- kruskal.test(daily_FFQ_score ~ COUNTRY, data = DOMINO_BSB)
+
+DOMINO_C <- filter(DOMINO_category, category == "cereals")
+KW_C <- kruskal.test(daily_FFQ_score ~ COUNTRY, data = DOMINO_C)
+
+DOMINO_PRP <- filter(DOMINO_category, category == "potatoes_rice_pasta")
+KW_PRP <- kruskal.test(daily_FFQ_score ~ COUNTRY, data = DOMINO_PRP)
+
+DOMINO_DF <- filter(DOMINO_category, category == "dairy_fats")
+KW_DF <- kruskal.test(daily_FFQ_score ~ COUNTRY, data = DOMINO_DF)
+
+DOMINO_OBV <- filter(DOMINO_category, category == "on_bread_veg")
+KW_OBV <- kruskal.test(daily_FFQ_score ~ COUNTRY, data = DOMINO_OBV)
+
+DOMINO_SwS <- filter(DOMINO_category, category == "sweets_snacks")
+KW_SwS <- kruskal.test(daily_FFQ_score ~ COUNTRY, data = DOMINO_SwS)
+
+DOMINO_SSS <- filter(DOMINO_category, category == "soups_sauces_spreads")
+KW_SSS <- kruskal.test(daily_FFQ_score ~ COUNTRY, data = DOMINO_SSS)
+
+DOMINO_D <- filter(DOMINO_category, category == "drinks")
+KW_D <- kruskal.test(daily_FFQ_score ~ COUNTRY, data = DOMINO_D)
+
+DOMINO_Fr <- filter(DOMINO_category, category == "fruits")
+KW_Fr <- kruskal.test(daily_FFQ_score ~ COUNTRY, data = DOMINO_Fr)
+
+DOMINO_V <- filter(DOMINO_category, category == "vegetables")
+KW_V <- kruskal.test(daily_FFQ_score ~ COUNTRY, data = DOMINO_V)
+
+KW_p_value <- c(KW_MF$p.value, KW_BSB$p.value, KW_C$p.value, KW_PRP$p.value, KW_DF$p.value,
+          KW_OBV$p.value, KW_SwS$p.value, KW_SSS$p.value, KW_D$p.value, KW_Fr$p.value,
+          KW_V$p.value)
+Food_Categories <- c("meat_fish", "bread_sav_biscuits", "cereals", "potatoes_rice_pasta",
+                     "dairy_fats", "on_bread_veg", "sweets_snacks", "soups_sauces_spreads",
+                     "drinks", "fruits", "vegetables")
+KW_p_category <- tibble(Food_Categories, KW_p_value)
+KW_p_category
+```
+
+## Boxplots
+```{r}
+foodgroup_boxplot <- function(cat) {
+  DOMINO_category %>%
+    filter(category == cat) %>%
+    ggplot(aes(x = COUNTRY, y = daily_FFQ_score, colour = COUNTRY)) +
+    geom_boxplot() +
+    ylim(0, 6) +
+    ylab("Daily intake derived from FFQ score") +
+    theme_bw() 
+}
+print(foodgroup_boxplot("meat_fish") + labs(title= "Meat and fish intake by country"))
+print(foodgroup_boxplot("bread_sav_biscuits") + labs(title= "Bread and savoury biscuits intake by country"))
+print(foodgroup_boxplot("cereals") + labs(title= "Cereals intake by country"))
+print(foodgroup_boxplot("potatoes_rice_pasta") + labs(title= "Potatoes, rice and pasta intake by country"))
+print(foodgroup_boxplot("dairy_fats") + labs(title= "Dairy and fat intake by country"))
+print(foodgroup_boxplot("on_bread_veg") + labs(title= "Foods on bread and vegetables intake by country"))
+print(foodgroup_boxplot("sweets_snacks") + labs(title= "Sweet and snack intake by country"))
+print(foodgroup_boxplot("soups_sauces_spreads") + labs(title= "Soups, sauces and spreads intake by country"))
+print(foodgroup_boxplot("drinks") + labs(title= "Drink intake by country"))
+print(foodgroup_boxplot("fruits") + labs(title= "Fruit intake by country"))
+print(foodgroup_boxplot("vegetables") + labs(title= "Vegetable intake by country"))
+```
+
+## Transformation
+
+The boxplots demonstrate that the data is right-skewed so a logarithmic transformation of the daily FFQ score + 1 (so data points of 0 can be logarithmically transformed) was used to aid data visualisation.
+
+```{r}
+DOMINO_transformation <- mutate(DOMINO_category, trans_daily_FFQ_score = log(daily_FFQ_score + 1))
+foodgroup_boxplot <- function(cat) {
+  DOMINO_transformation %>%
+    filter(category == cat) %>%
+    ggplot(aes(x = COUNTRY, y = trans_daily_FFQ_score, colour = COUNTRY)) +
+    geom_boxplot() +
+    ylim(0, 2) +
+    ylab("Transformed daily intake derived from FFQ score") +
+    theme_bw() 
+}
+
+print(foodgroup_boxplot("meat_fish") + labs(title= "Meat and fish intake by country"))
+print(foodgroup_boxplot("bread_sav_biscuits") + labs(title= "Bread and savoury biscuits intake by country"))
+print(foodgroup_boxplot("cereals") + labs(title= "Cereals intake by country"))
+print(foodgroup_boxplot("potatoes_rice_pasta") + labs(title= "Potatoes, rice and pasta intake by country"))
+print(foodgroup_boxplot("dairy_fats") + labs(title= "Dairy and fat intake by country"))
+print(foodgroup_boxplot("on_bread_veg") + labs(title= "Foods on bread and vegetables intake by country"))
+print(foodgroup_boxplot("sweets_snacks") + labs(title= "Sweet and snack intake by country"))
+print(foodgroup_boxplot("soups_sauces_spreads") + labs(title= "Soups, sauces and spreads intake by country"))
+print(foodgroup_boxplot("drinks") + labs(title= "Drink intake by country"))
+print(foodgroup_boxplot("fruits") + labs(title= "Fruit intake by country"))
+print(foodgroup_boxplot("vegetables") + labs(title= "Vegetable intake by country"))
+```
