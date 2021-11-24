@@ -23,6 +23,7 @@ shinyUI(fluidPage(
             "text/csv",
             "text/comma-separated-values,text/plain",
             ".csv")),
+          selectInput('choice','Choose where the statistical analysis will be performed on',choices =c( "Individual Foods","Food Categories")),
           
           tags$hr(),
           
@@ -39,10 +40,21 @@ shinyUI(fluidPage(
         # Show a plot of the generated distribution
         mainPanel(
             tabsetPanel(
-              tabPanel("Summary Plot",plotOutput('plot')),
-              tabPanel("Category Summary Plot",plotOutput('cat_plot')),
-              tabPanel("PCA by Food",plotOutput('pca_food')),
-              tabPanel("PCA by Category",plotOutput('pca_cat'))
+              tabPanel("Summary",  verbatimTextOutput("summary")),
+              tabPanel("Summary Plot",plotOutput('plot',height = 300, brush = brushOpts(id = "plot2_brush", clip = TRUE, resetOnNew = TRUE))),
+              tabPanel("PCA",plotOutput('pca',height = 300, brush = brushOpts(id = "plot2_brush", clip = TRUE, resetOnNew = TRUE)),verbatimTextOutput("pca_summary")),
+              tabPanel("Missingness",plotOutput("missingno"),plotOutput('missingno1'),uiOutput("country"),plotOutput('missingno2')),
+              tabPanel("Kruskal-Wallis",selectInput('category', "Choose the category to perform Kruskal Wallace test on", choices=c("Meat and Fish"="MEAT & FISH",
+                                                                                                                                    "Bread and Savoury Biscuits"="BREAD & BISCUITS",
+                                                                                                                                    "Cereals"="CEREALS",
+                                                                                                                                    "Potatotes, Rice and Pasta"="POTATOES, RICE & PASTA",
+                                                                                                                                    "Dairy Products and Fats"="DAIRY & FATS",
+                                                                                                                                    "On Bread or Vegetables"= "TOPPING",
+                                                                                                                                    "Sweets and Snacks"="SWEETS & SNACKS",
+                                                                                                                                    "Soups, Sauces and Spreads"="SOUPS & SPREADS",
+                                                                                                                                    "Drinks"="DRINKS",
+                                                                                                                                    "Fruit"="FRUIT",
+                                                                                                                                    "Vegetables"="VEG")), verbatimTextOutput("test"))
         )
     )
 )))

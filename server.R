@@ -35,6 +35,15 @@ shinyServer(function(input, output) {
         select(COUNTRY:OLIVES)
       DOMINO[DOMINO == -9] <- NA
       DOMINO[DOMINO == -8] <- NA
+      DOMINO[DOMINO ==  1] <- 0       #FFQ NEVER
+      DOMINO[DOMINO ==  2] <- 0.067   #FFQ 1-3 TIMES A MONTH(AVERAGE 2 TIMES A MONTH 2/30)
+      DOMINO[DOMINO ==  3] <- 0.143   #FFQ ONCE A WEEK 4.29/30
+      DOMINO[DOMINO ==  4] <- 0.429   #FFQ 2-4 TIMES A WEEK AVG 3 TIMES A WEEK 3*4.29/30
+      DOMINO[DOMINO ==  5] <- 0.786   #FFQ 5-6 TIMES A WEEK AVG 5.5 TIMES A WEEK 5.5*4.29/30
+      DOMINO[DOMINO ==  6] <- 1       #FFQ ONCE A DAY 30/30
+      DOMINO[DOMINO ==  7] <- 2.5     #FFQ 2-3 TIMES A DAY 2.5*30/30   
+      DOMINO[DOMINO ==  8] <- 4.5     #FFQ 4-5 TIMES A DAY 4.5*30/30 
+      DOMINO[DOMINO ==  9] <- 6       #FFQ 6+ TIMES A DAY 6*30/30
       DOMINO$ID <- seq.int(nrow(DOMINO))
       return(DOMINO %>%
                select(COUNTRY, ID, BEEF:OLIVES))
@@ -106,12 +115,24 @@ shinyServer(function(input, output) {
         select(ID, COUNTRY, CATEGORY, FOOD, FFQ)
       DOMINO_cat
     })
+    ranges2 <- reactiveValues(x = NULL, y = NULL)
+    observe({
+      brush <- input$Disp_brush
+      if (!is.null(brush)) {
+        ranges2$x <- c(brush$xmin, brush$xmax)
+        ranges2$y <- c(brush$ymin, brush$ymax)
+        
+      } else {
+        ranges2$x <- NULL
+        ranges2$y <- NULL
+      }
+    })
     
-    
-    output$plot <- renderPlot({
+    getsummary<-reactive({
+      if(input$choice =='Individual Foods')
+    {
       DOMINO_grouped <- pivot_longer(data = getdata(), cols = BEEF:OLIVES, names_to = "FOOD", values_to = "FFQ")
-      
-       ggplot (data = DOMINO_grouped, mapping = aes(x = FOOD, y = FFQ)) + 
+      ggplot (data = DOMINO_grouped, mapping = aes(x = FOOD, y = FFQ)) + 
         geom_col(aes(fill = COUNTRY)) +
         labs(title = "Cross-cultural Nutrional Differences") +
         xlab("Food Type") +
@@ -119,41 +140,174 @@ shinyServer(function(input, output) {
         theme_minimal() +
         theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1)) +
         theme(legend.position="bottom") +
-        scale_fill_brewer(palette="Spectral")
-    })
-    
-    output$cat_plot<-renderPlot({
-    ggplot (data = getcategories(), mapping = aes(x = CATEGORY, y = FFQ)) + 
+        scale_fill_brewer(palette="Spectral")}
+      else
+      {DOMINO_grouped <-getcategories()
+      ggplot (data = getcategories(), mapping = aes(x = CATEGORY, y = FFQ)) + 
         geom_col(aes(fill = COUNTRY)) +
         labs(title = "Cross-cultural Nutrional Differences by Food Category") +
         xlab("Food Category") +
         ylab("FFQ Score") +
         theme_minimal() +
         theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1)) +
-        scale_fill_brewer(palette="Spectral")
+        scale_fill_brewer(palette="Spectral")}
+     })
+    
+    output$plot <- renderPlot({
+       getsummary()
+       
     })
-    output$pca_food<-renderPlot({
-      DOMINO_grouped <- pivot_longer(data = getdata(), cols = BEEF:OLIVES, names_to = "FOOD", values_to = "FFQ")
+    
+    getpca<-reactive({
+      if(input$choice =='Individual Foods')
+      { DOMINO<-getdata()
+        DOMINO_grouped <- pivot_longer(data = DOMINO, cols = BEEF:OLIVES, names_to = "FOOD", values_to = "FFQ")
+      
       DOMINO_food <- DOMINO_grouped %>%
         na.omit() %>%
         pivot_wider(id_cols = COUNTRY:ID, names_from = FOOD, values_from = FFQ) %>%
         select(BEEF:OLIVES)
       
       DOMINO_pca <- prcomp(DOMINO_food, center = TRUE, scale. = TRUE)
-      DOMINO_countries <- c(rep("UK", 10), rep("Switzerland", 2), rep("Poland", 18), rep("Spain", 30))
-      DOMINO_bp <- ggbiplot(DOMINO_pca, ellipse = TRUE,  groups = DOMINO_countries)
-      DOMINO_bp
+      DOMINO_countries <- as_vector(DOMINO%>%
+        select(COUNTRY))
+      DOMINO_bp <- ggbiplot(DOMINO_pca, ellipse = TRUE,  groups = DOMINO_countries)+coord_cartesian(xlim = ranges2$x, ylim = ranges2$y)
+      #
+      }
+      else{
+        DOMINO<-getdata()
+        DOMINO_wide <- getcategories() %>%
+          na.omit() %>%
+          select(-FOOD) %>%
+          pivot_wider(id_cols = ID:COUNTRY, names_from = CATEGORY, values_from = FFQ, values_fn = sum) %>%
+          select(3:13)
+        DOMINO_cat_pca <- prcomp(DOMINO_wide, center = TRUE, scale. = TRUE)
+        DOMINO_countries <- as_vector(DOMINO%>%
+                                        select(COUNTRY))
+        DOMINO_bp <- ggbiplot(DOMINO_cat_pca, ellipse = TRUE,  groups = DOMINO_countries)+coord_cartesian(xlim = ranges2$x, ylim = ranges2$y)
+        #return(DOMINO_cat_bp)
+      }
+      return(DOMINO_bp)
+    })
+    pca_sum<-reactive({
+      if(input$choice =='Individual Foods')
+      { DOMINO<-getdata()
+      DOMINO_grouped <- pivot_longer(data = DOMINO, cols = BEEF:OLIVES, names_to = "FOOD", values_to = "FFQ")
       
-      })
-    output$pca_cat<-renderPlot({   
-      DOMINO_wide <- getcategories() %>%
-      na.omit() %>%
-      select(-FOOD) %>%
-      pivot_wider(id_cols = ID:COUNTRY, names_from = CATEGORY, values_from = FFQ, values_fn = sum) %>%
-      select(3:13)
-    DOMINO_cat_pca <- prcomp(DOMINO_wide, center = TRUE, scale. = TRUE)
-    DOMINO_countries <- c(rep("UK", 10), rep("Switzerland", 2), rep("Poland", 18), rep("Spain", 30))
-    DOMINO_cat_bp <- ggbiplot(DOMINO_cat_pca, ellipse = TRUE,  groups = DOMINO_countries)
-    DOMINO_cat_bp})
+      DOMINO_food <- DOMINO_grouped %>%
+        na.omit() %>%
+        pivot_wider(id_cols = COUNTRY:ID, names_from = FOOD, values_from = FFQ) %>%
+        select(BEEF:OLIVES)
+      
+      DOMINO_pca <- prcomp(DOMINO_food, center = TRUE, scale. = TRUE)
+      DOMINO_pca
+      }
+      else{
+        DOMINO<-getdata()
+        DOMINO_wide <- getcategories() %>%
+          na.omit() %>%
+          select(-FOOD) %>%
+          pivot_wider(id_cols = ID:COUNTRY, names_from = CATEGORY, values_from = FFQ, values_fn = sum) %>%
+          select(3:13)
+        DOMINO_pca <- prcomp(DOMINO_wide, center = TRUE, scale. = TRUE)
+        DOMINO_pca
+      }
     
+    })
+    
+    output$pca_summary<-renderPrint({summary(pca_sum())})
+    output$pca<-renderPlot({
+      getpca()
+      })
+    
+    summ<-reactive({
+      if(input$choice =='Individual Foods')
+      {summary(getdata())}
+      else
+        summary(getcategories()$CATEGORY)
+    })
+    
+     output$summary<-renderPrint({summ()})
+    output$missingno<-renderPlot({
+      DOMINO<-getdata()
+      proportion_missing <- colSums(is.na(DOMINO)) / nrow(DOMINO)
+      Food_group <- colnames(DOMINO) 
+      missing_data_country <- tibble(Food_group, proportion_missing) %>%
+        filter(Food_group != "COUNTRY")
+      
+      missing_data_country %>%
+        ggplot(aes(x = Food_group, y = proportion_missing)) +
+        geom_col() +
+        geom_text(aes(label = ifelse(proportion_missing > 0, as.character(Food_group), ''))) +
+        labs(x = "Food group", 
+             y = "proportion of values missing", 
+             title = "Proportion of values which are missing for each food group across all countries")+
+        theme_minimal() +
+        theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1))
+    })
+    output$missingno1<-renderPlot({
+      missing.values <- getdata() %>%
+        gather(key = "key", value = "val") %>%
+        mutate(isna = is.na(val)) %>%
+        group_by(key) %>%
+        dplyr::mutate(total = n()) %>%
+        group_by(key, total, isna) %>%
+        dplyr::summarise(num.isna = n()) %>%
+        mutate(pct = num.isna / total * 100)
+      
+      levels <-
+        (missing.values  %>% filter(isna == T) %>% arrange(desc(pct)))$key
+      
+      percentage.plot <- missing.values %>%
+        ggplot() +
+        geom_bar(aes(x = reorder(key, desc(pct)), 
+                     y = pct, fill=isna), 
+                 stat = 'identity', alpha=0.8) +
+        scale_x_discrete(limits = levels) +
+        scale_fill_manual(name = "", 
+                          values = c('steelblue', 'tomato3'), labels = c("Present", "Missing")) +
+        coord_flip() +
+        labs(title = "Percentage of missing values", x =
+               'Variable', y = "% of missing values")
+      
+      percentage.plot
+    })
+    output$country<- renderUI({
+      DOMINO<-getdata()
+      list_countries<-DOMINO%>%
+        select(COUNTRY)
+      countries<-distinct(list_countries)
+      
+      selectInput('var', "Choose the Country of Missingness", countries)
+    })
+    output$missingno2<-renderPlot({
+      DOMINO<-getdata()
+      country<-input$var
+      missing_data_Sw <- filter(DOMINO, COUNTRY == country) %>%
+        gather(key = "Food_group", value = "val") %>%
+        mutate(is.missing = is.na(val)) %>%
+        group_by(Food_group, is.missing) %>%
+        dplyr::summarise(n_missing_Sw = n()) %>%
+        filter(is.missing == T) %>%
+        select(-is.missing) %>%
+        arrange(desc(n_missing_Sw)) 
+      ###:https://jenslaufer.com/data/analysis/visualize_missing_values_with_ggplot.html
+      
+      missing_data_Sw$proportion_missing_Sw <- missing_data_Sw$n_missing_Sw / nrow(filter(DOMINO, COUNTRY == country))
+     
+      missing_data_Sw %>%
+        ggplot() +
+        geom_col(aes(x = Food_group, y = proportion_missing_Sw)) +
+        labs(x = "Food group", y = "Proportion of missing values", title = "Proportion of missing values for chosen country by food group") +
+        theme_bw()
+    })
+    
+    
+    output$test<-renderPrint({
+      DOMINO_category<-getcategories()
+      DOMINO_MF <- filter(DOMINO_category, CATEGORY == input$category)
+      KW_MF <- kruskal.test(FFQ ~ COUNTRY, data = DOMINO_MF)
+      print(KW_MF)
+    })
 })
+
