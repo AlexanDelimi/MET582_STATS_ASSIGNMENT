@@ -1,8 +1,8 @@
 ---
 title: "median_comparisons"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -55,7 +55,7 @@ foodgroup_boxplot <- function(cat) {
     filter(category == cat) %>%
     ggplot(aes(x = COUNTRY, y = FFQ, colour = COUNTRY)) +
     geom_boxplot() +
-    theme_bw()
+    theme_bw() 
 }
 print(foodgroup_boxplot("meat_fish") + labs(title= "Meat and fish intake by country"))
 print(foodgroup_boxplot("bread_sav_biscuits") + labs(title= "Bread and savoury biscuits intake by country"))
@@ -70,7 +70,11 @@ print(foodgroup_boxplot("fruits") + labs(title= "Fruit intake by country"))
 print(foodgroup_boxplot("vegetables") + labs(title= "Vegetable intake by country"))
 ```
 
-## Kruskal-Wallis tests within groups (needs to be corrected for multiple tests)
+```{r}
+
+```
+
+## Kruskal-Wallis tests within groups
 ```{r, echo = FALSE}
 DOMINO_MF <- filter(DOMINO_category, category == "meat_fish")
 KW_MF <- kruskal.test(FFQ ~ COUNTRY, data = DOMINO_MF)
@@ -113,4 +117,395 @@ food_categories <- c("meat_fish", "bread_sav_biscuits", "cereals", "potatoes_ric
                      "drinks", "fruits", "vegetables")
 KW_p_category <- tibble(food_categories, KW_p)
 KW_p_category
+```
+
+## Pairwise comparisons
+### bread and savoury biscuits
+```{r}
+wilcox_pairwise <- function(cat, country1, country2) {
+  DOMINO_category2 <- filter(DOMINO_category, category == cat)
+  DOMINO_category2 <- filter(DOMINO_category2, COUNTRY == country1 | COUNTRY == country2)
+  wilcox.test(FFQ ~ COUNTRY, data = DOMINO_category2)
+}
+
+UK_Sw_BSB_w <- wilcox_pairwise(cat = "bread_sav_biscuits", country1 = "UK", country2 = "Switzerland")
+UK_Po_BSB_w <- wilcox_pairwise(cat = "bread_sav_biscuits", country1 = "UK", country2 = "Poland")
+UK_Sp_BSB_w <- wilcox_pairwise(cat = "bread_sav_biscuits", country1 = "UK", country2 = "Spain")
+Sw_Po_BSB_w <- wilcox_pairwise(cat = "bread_sav_biscuits", country1 = "Switzerland", country2 = "Poland")
+Sw_Sp_BSB_w <- wilcox_pairwise(cat = "bread_sav_biscuits", country1 = "Switzerland", country2 = "Spain")
+Sp_Po_BSB_w <- wilcox_pairwise(cat = "bread_sav_biscuits", country1 = "Spain", country2 = "Poland")
+wilcox_BSB <- c(UK_Sw_BSB_w$p.value, UK_Po_BSB_w$p.value, UK_Sp_BSB_w$p.value, 
+                Sw_Po_BSB_w$p.value, Sw_Sp_BSB_w$p.value, Sp_Po_BSB_w$p.value)
+Country1 <- c("UK", "UK", "UK", "Switzerland", "Switzerland", "Spain")
+Country2 <- c("Switzerland", "Poland", "Spain", "Poland", "Spain", "Poland")
+wilcox_BSB_p <- tibble(Country1, Country2, wilcox_BSB)
+wilcox_BSB_p$holm_adjusted_w_BSB <- p.adjust(wilcox_BSB, method = "holm")
+wilcox_BSB_p
+```
+
+### cereals
+```{r}
+UK_Sw_C_w <- wilcox_pairwise(cat = "cereals", country1 = "UK", country2 = "Switzerland")
+UK_Po_C_w <- wilcox_pairwise(cat = "cereals", country1 = "UK", country2 = "Poland")
+UK_Sp_C_w <- wilcox_pairwise(cat = "cereals", country1 = "UK", country2 = "Spain")
+Sw_Po_C_w <- wilcox_pairwise(cat = "cereals", country1 = "Switzerland", country2 = "Poland")
+Sw_Sp_C_w <- wilcox_pairwise(cat = "cereals", country1 = "Switzerland", country2 = "Spain")
+Sp_Po_C_w <- wilcox_pairwise(cat = "cereals", country1 = "Spain", country2 = "Poland")
+wilcox_C <- c(UK_Sw_C_w$p.value, UK_Po_C_w$p.value, UK_Sp_C_w$p.value, 
+                Sw_Po_C_w$p.value, Sw_Sp_C_w$p.value, Sp_Po_C_w$p.value)
+Country1 <- c("UK", "UK", "UK", "Switzerland", "Switzerland", "Spain")
+Country2 <- c("Switzerland", "Poland", "Spain", "Poland", "Spain", "Poland")
+wilcox_C_p <- tibble(Country1, Country2, wilcox_C)
+wilcox_C_p$holm_adjusted_w_C <- p.adjust(wilcox_C, method = "holm")
+wilcox_C_p
+```
+
+### potatoes, rice and pasta
+```{r}
+UK_Sw_PRP_w <- wilcox_pairwise(cat = "potatoes_rice_pasta", country1 = "UK", country2 = "Switzerland")
+UK_Po_PRP_w <- wilcox_pairwise(cat = "potatoes_rice_pasta", country1 = "UK", country2 = "Poland")
+UK_Sp_PRP_w <- wilcox_pairwise(cat = "potatoes_rice_pasta", country1 = "UK", country2 = "Spain")
+Sw_Po_PRP_w <- wilcox_pairwise(cat = "potatoes_rice_pasta", country1 = "Switzerland", country2 = "Poland")
+Sw_Sp_PRP_w <- wilcox_pairwise(cat = "potatoes_rice_pasta", country1 = "Switzerland", country2 = "Spain")
+Sp_Po_PRP_w <- wilcox_pairwise(cat = "potatoes_rice_pasta", country1 = "Spain", country2 = "Poland")
+wilcox_PRP <- c(UK_Sw_PRP_w$p.value, UK_Po_PRP_w$p.value, UK_Sp_PRP_w$p.value, 
+                Sw_Po_PRP_w$p.value, Sw_Sp_PRP_w$p.value, Sp_Po_PRP_w$p.value)
+Country1 <- c("UK", "UK", "UK", "Switzerland", "Switzerland", "Spain")
+Country2 <- c("Switzerland", "Poland", "Spain", "Poland", "Spain", "Poland")
+wilcox_PRP_p <- tibble(Country1, Country2, wilcox_PRP)
+wilcox_PRP_p$holm_adjusted_w_PRP <- p.adjust(wilcox_PRP, method = "holm")
+wilcox_PRP_p
+```
+### dairy and fats
+```{r}
+UK_Sw_DF_w <- wilcox_pairwise(cat = "dairy_fats", country1 = "UK", country2 = "Switzerland")
+UK_Po_DF_w <- wilcox_pairwise(cat = "dairy_fats", country1 = "UK", country2 = "Poland")
+UK_Sp_DF_w <- wilcox_pairwise(cat = "dairy_fats", country1 = "UK", country2 = "Spain")
+Sw_Po_DF_w <- wilcox_pairwise(cat = "dairy_fats", country1 = "Switzerland", country2 = "Poland")
+Sw_Sp_DF_w <- wilcox_pairwise(cat = "dairy_fats", country1 = "Switzerland", country2 = "Spain")
+Sp_Po_DF_w <- wilcox_pairwise(cat = "dairy_fats", country1 = "Spain", country2 = "Poland")
+wilcox_DF <- c(UK_Sw_DF_w$p.value, UK_Po_DF_w$p.value, UK_Sp_DF_w$p.value, 
+                Sw_Po_DF_w$p.value, Sw_Sp_DF_w$p.value, Sp_Po_DF_w$p.value)
+Country1 <- c("UK", "UK", "UK", "Switzerland", "Switzerland", "Spain")
+Country2 <- c("Switzerland", "Poland", "Spain", "Poland", "Spain", "Poland")
+wilcox_DF_p <- tibble(Country1, Country2, wilcox_DF)
+wilcox_DF_p$holm_adjusted_w_DF <- p.adjust(wilcox_DF, method = "holm")
+wilcox_DF_p
+```
+### sweets and snacks
+```{r}
+UK_Sw_SwS_w <- wilcox_pairwise(cat = "sweets_snacks", country1 = "UK", country2 = "Switzerland")
+UK_Po_SwS_w <- wilcox_pairwise(cat = "sweets_snacks", country1 = "UK", country2 = "Poland")
+UK_Sp_SwS_w <- wilcox_pairwise(cat = "sweets_snacks", country1 = "UK", country2 = "Spain")
+Sw_Po_SwS_w <- wilcox_pairwise(cat = "sweets_snacks", country1 = "Switzerland", country2 = "Poland")
+Sw_Sp_SwS_w <- wilcox_pairwise(cat = "sweets_snacks", country1 = "Switzerland", country2 = "Spain")
+Sp_Po_SwS_w <- wilcox_pairwise(cat = "sweets_snacks", country1 = "Spain", country2 = "Poland")
+wilcox_SwS <- c(UK_Sw_SwS_w$p.value, UK_Po_SwS_w$p.value, UK_Sp_SwS_w$p.value, 
+                Sw_Po_SwS_w$p.value, Sw_Sp_SwS_w$p.value, Sp_Po_SwS_w$p.value)
+Country1 <- c("UK", "UK", "UK", "Switzerland", "Switzerland", "Spain")
+Country2 <- c("Switzerland", "Poland", "Spain", "Poland", "Spain", "Poland")
+wilcox_SwS_p <- tibble(Country1, Country2, wilcox_SwS)
+wilcox_SwS_p$holm_adjusted_w_SwS <- p.adjust(wilcox_SwS, method = "holm")
+wilcox_SwS_p
+```
+### soups, sauces and spreads
+```{r}
+UK_Sw_SSS_w <- wilcox_pairwise(cat = "soups_sauces_spreads", country1 = "UK", country2 = "Switzerland")
+UK_Po_SSS_w <- wilcox_pairwise(cat = "soups_sauces_spreads", country1 = "UK", country2 = "Poland")
+UK_Sp_SSS_w <- wilcox_pairwise(cat = "soups_sauces_spreads", country1 = "UK", country2 = "Spain")
+Sw_Po_SSS_w <- wilcox_pairwise(cat = "soups_sauces_spreads", country1 = "Switzerland", country2 = "Poland")
+Sw_Sp_SSS_w <- wilcox_pairwise(cat = "soups_sauces_spreads", country1 = "Switzerland", country2 = "Spain")
+Sp_Po_SSS_w <- wilcox_pairwise(cat = "soups_sauces_spreads", country1 = "Spain", country2 = "Poland")
+wilcox_SSS <- c(UK_Sw_SSS_w$p.value, UK_Po_SSS_w$p.value, UK_Sp_SSS_w$p.value, 
+                Sw_Po_SSS_w$p.value, Sw_Sp_SSS_w$p.value, Sp_Po_SSS_w$p.value)
+Country1 <- c("UK", "UK", "UK", "Switzerland", "Switzerland", "Spain")
+Country2 <- c("Switzerland", "Poland", "Spain", "Poland", "Spain", "Poland")
+wilcox_SSS_p <- tibble(Country1, Country2, wilcox_SSS)
+wilcox_SSS_p$holm_adjusted_w_SSS <- p.adjust(wilcox_SSS, method = "holm")
+wilcox_SSS_p
+```
+### drinks
+```{r}
+UK_Sw_D_w <- wilcox_pairwise(cat = "drinks", country1 = "UK", country2 = "Switzerland")
+UK_Po_D_w <- wilcox_pairwise(cat = "drinks", country1 = "UK", country2 = "Poland")
+UK_Sp_D_w <- wilcox_pairwise(cat = "drinks", country1 = "UK", country2 = "Spain")
+Sw_Po_D_w <- wilcox_pairwise(cat = "drinks", country1 = "Switzerland", country2 = "Poland")
+Sw_Sp_D_w <- wilcox_pairwise(cat = "drinks", country1 = "Switzerland", country2 = "Spain")
+Sp_Po_D_w <- wilcox_pairwise(cat = "drinks", country1 = "Spain", country2 = "Poland")
+wilcox_D <- c(UK_Sw_D_w$p.value, UK_Po_D_w$p.value, UK_Sp_D_w$p.value, 
+                Sw_Po_D_w$p.value, Sw_Sp_D_w$p.value, Sp_Po_D_w$p.value)
+Country1 <- c("UK", "UK", "UK", "Switzerland", "Switzerland", "Spain")
+Country2 <- c("Switzerland", "Poland", "Spain", "Poland", "Spain", "Poland")
+wilcox_D_p <- tibble(Country1, Country2, wilcox_D)
+wilcox_D_p$holm_adjusted_w_D <- p.adjust(wilcox_D, method = "holm")
+wilcox_D_p
+```
+### fruits
+```{r}
+UK_Sw_Fr_w <- wilcox_pairwise(cat = "fruits", country1 = "UK", country2 = "Switzerland")
+UK_Po_Fr_w <- wilcox_pairwise(cat = "fruits", country1 = "UK", country2 = "Poland")
+UK_Sp_Fr_w <- wilcox_pairwise(cat = "fruits", country1 = "UK", country2 = "Spain")
+Sw_Po_Fr_w <- wilcox_pairwise(cat = "fruits", country1 = "Switzerland", country2 = "Poland")
+Sw_Sp_Fr_w <- wilcox_pairwise(cat = "fruits", country1 = "Switzerland", country2 = "Spain")
+Sp_Po_Fr_w <- wilcox_pairwise(cat = "fruits", country1 = "Spain", country2 = "Poland")
+wilcox_Fr <- c(UK_Sw_Fr_w$p.value, UK_Po_Fr_w$p.value, UK_Sp_Fr_w$p.value, 
+                Sw_Po_Fr_w$p.value, Sw_Sp_Fr_w$p.value, Sp_Po_Fr_w$p.value)
+Country1 <- c("UK", "UK", "UK", "Switzerland", "Switzerland", "Spain")
+Country2 <- c("Switzerland", "Poland", "Spain", "Poland", "Spain", "Poland")
+wilcox_Fr_p <- tibble(Country1, Country2, wilcox_Fr)
+wilcox_Fr_p$holm_adjusted_w_Fr <- p.adjust(wilcox_Fr, method = "holm")
+wilcox_Fr_p
+```
+
+### vegetables
+```{r}
+UK_Sw_V_w <- wilcox_pairwise(cat = "vegetables", country1 = "UK", country2 = "Switzerland")
+UK_Po_V_w <- wilcox_pairwise(cat = "vegetables", country1 = "UK", country2 = "Poland")
+UK_Sp_V_w <- wilcox_pairwise(cat = "vegetables", country1 = "UK", country2 = "Spain")
+Sw_Po_V_w <- wilcox_pairwise(cat = "vegetables", country1 = "Switzerland", country2 = "Poland")
+Sw_Sp_V_w <- wilcox_pairwise(cat = "vegetables", country1 = "Switzerland", country2 = "Spain")
+Sp_Po_V_w <- wilcox_pairwise(cat = "vegetables", country1 = "Spain", country2 = "Poland")
+wilcox_V <- c(UK_Sw_V_w$p.value, UK_Po_V_w$p.value, UK_Sp_V_w$p.value, 
+                Sw_Po_V_w$p.value, Sw_Sp_V_w$p.value, Sp_Po_V_w$p.value)
+Country1 <- c("UK", "UK", "UK", "Switzerland", "Switzerland", "Spain")
+Country2 <- c("Switzerland", "Poland", "Spain", "Poland", "Spain", "Poland")
+wilcox_V_p <- tibble(Country1, Country2, wilcox_V)
+wilcox_V_p$holm_adjusted_w_V <- p.adjust(wilcox_V, method = "holm")
+wilcox_V_p
+```
+
+## Kruskal-Wallis testing without Switzerland
+```{r}
+DOMINO_MF_no_Sw <- filter(DOMINO_category, category == "meat_fish") %>%
+  filter(!COUNTRY == "Switzerland")
+KW_MF_no_Sw <- kruskal.test(FFQ ~ COUNTRY, data = DOMINO_MF_no_Sw)
+
+DOMINO_BSB_no_Sw <- filter(DOMINO_category, category == "bread_sav_biscuits") %>%
+  filter(!COUNTRY == "Switzerland")
+KW_BSB_no_Sw <- kruskal.test(FFQ ~ COUNTRY, data = DOMINO_BSB_no_Sw)
+
+DOMINO_C_no_Sw <- filter(DOMINO_category, category == "cereals") %>%
+  filter(!COUNTRY == "Switzerland")
+KW_C_no_Sw <- kruskal.test(FFQ ~ COUNTRY, data = DOMINO_C_no_Sw)
+
+DOMINO_PRP_no_Sw <- filter(DOMINO_category, category == "potatoes_rice_pasta") %>%
+  filter(!COUNTRY == "Switzerland")
+KW_PRP_no_Sw <- kruskal.test(FFQ ~ COUNTRY, data = DOMINO_PRP_no_Sw)
+
+DOMINO_DF_no_Sw <- filter(DOMINO_category, category == "dairy_fats") %>%
+  filter(!COUNTRY == "Switzerland")
+KW_DF_no_Sw <- kruskal.test(FFQ ~ COUNTRY, data = DOMINO_DF_no_Sw)
+
+DOMINO_OBV_no_Sw <- filter(DOMINO_category, category == "on_bread_veg") %>%
+  filter(!COUNTRY == "Switzerland")
+KW_OBV_no_Sw <- kruskal.test(FFQ ~ COUNTRY, data = DOMINO_OBV_no_Sw)
+
+DOMINO_SwS_no_Sw <- filter(DOMINO_category, category == "sweets_snacks") %>%
+  filter(!COUNTRY == "Switzerland")
+KW_SwS_no_Sw <- kruskal.test(FFQ ~ COUNTRY, data = DOMINO_SwS_no_Sw)
+
+DOMINO_SSS_no_Sw <- filter(DOMINO_category, category == "soups_sauces_spreads") %>%
+  filter(!COUNTRY == "Switzerland")
+KW_SSS_no_Sw <- kruskal.test(FFQ ~ COUNTRY, data = DOMINO_SSS_no_Sw)
+
+DOMINO_D_no_Sw <- filter(DOMINO_category, category == "drinks") %>%
+  filter(!COUNTRY == "Switzerland")
+KW_D_no_Sw <- kruskal.test(FFQ ~ COUNTRY, data = DOMINO_D_no_Sw)
+
+DOMINO_Fr_no_Sw <- filter(DOMINO_category, category == "fruits") %>%
+  filter(!COUNTRY == "Switzerland")
+KW_Fr_no_Sw <- kruskal.test(FFQ ~ COUNTRY, data = DOMINO_Fr_no_Sw)
+
+DOMINO_V_no_Sw <- filter(DOMINO_category, category == "vegetables") %>%
+  filter(!COUNTRY == "Switzerland")
+KW_V_no_Sw <- kruskal.test(FFQ ~ COUNTRY, data = DOMINO_V_no_Sw)
+
+KW_p_no_Sw <- c(KW_MF_no_Sw$p.value, KW_BSB_no_Sw$p.value, KW_C_no_Sw$p.value, 
+                KW_PRP_no_Sw$p.value, KW_DF_no_Sw$p.value, KW_OBV_no_Sw$p.value, 
+                KW_SwS_no_Sw$p.value, KW_SSS_no_Sw$p.value, KW_D_no_Sw$p.value, 
+                KW_Fr_no_Sw$p.value, KW_V_no_Sw$p.value)
+KW_p_category_no_Sw <- tibble(KW_p_category, KW_p_no_Sw)
+KW_p_category_no_Sw 
+```
+
+## Pairwise comparisons without Switzerland
+### bread and savoury biscuits
+```{r}
+wilcox_pairwise <- function(cat, country1, country2) {
+  DOMINO_category_no_Sw <- filter(DOMINO_category, category == cat) %>%
+    filter(!COUNTRY == "Switzerland")
+  DOMINO_category_no_Sw <- filter(DOMINO_category_no_Sw, COUNTRY == country1 | COUNTRY == country2)
+  wilcox.test(FFQ ~ COUNTRY, data = DOMINO_category_no_Sw)
+}
+
+
+UK_Po_BSB_w <- wilcox_pairwise(cat = "bread_sav_biscuits", country1 = "UK", country2 = "Poland")
+UK_Sp_BSB_w <- wilcox_pairwise(cat = "bread_sav_biscuits", country1 = "UK", country2 = "Spain")
+Sp_Po_BSB_w <- wilcox_pairwise(cat = "bread_sav_biscuits", country1 = "Spain", country2 = "Poland")
+wilcox_BSB_no_Sw <- c(UK_Po_BSB_w$p.value, UK_Sp_BSB_w$p.value,Sp_Po_BSB_w$p.value)
+Country1 <- c("UK", "UK", "Spain")
+Country2 <- c("Poland", "Spain", "Poland")
+wilcox_BSB_p_no_Sw <- tibble(Country1, Country2, wilcox_BSB_no_Sw)
+wilcox_BSB_p_no_Sw$holm_adjusted_w_BSB_no_Sw <- p.adjust(wilcox_BSB_no_Sw, method = "holm")
+wilcox_BSB_p_no_Sw <- mutate(wilcox_BSB_p_no_Sw, "sig at p = 0.05?" = case_when(
+                                                           holm_adjusted_w_BSB_no_Sw < 0.05 ~
+                                                          "significant",  
+                                                          holm_adjusted_w_BSB_no_Sw
+                                                           > 0.05 ~ "not significant"))
+wilcox_BSB_p_no_Sw
+```
+
+### cereals
+```{r}
+UK_Po_C_w <- wilcox_pairwise(cat = "cereals", country1 = "UK", country2 = "Poland")
+UK_Sp_C_w <- wilcox_pairwise(cat = "cereals", country1 = "UK", country2 = "Spain")
+Sp_Po_C_w <- wilcox_pairwise(cat = "cereals", country1 = "Spain", country2 = "Poland")
+wilcox_C_no_Sw <- c(UK_Po_C_w$p.value, UK_Sp_C_w$p.value, Sp_Po_C_w$p.value)
+Country1 <- c("UK", "UK", "Spain")
+Country2 <- c("Poland", "Spain", "Poland")
+wilcox_C_p_no_Sw <- tibble(Country1, Country2, wilcox_C_no_Sw)
+wilcox_C_p_no_Sw$holm_adjusted_w_C_no_Sw <- p.adjust(wilcox_C_no_Sw, method = "holm")
+wilcox_C_p_no_Sw <- mutate(wilcox_C_p_no_Sw, "sig at p = 0.05?" = case_when(
+                                                           holm_adjusted_w_C_no_Sw < 0.05 ~
+                                                          "significant",  
+                                                          holm_adjusted_w_C_no_Sw
+                                                           > 0.05 ~ "not significant"))
+wilcox_C_p_no_Sw
+```
+
+### potatoes, rice and pasta
+```{r}
+UK_Po_PRP_w <- wilcox_pairwise(cat = "potatoes_rice_pasta", country1 = "UK", country2 = "Poland")
+UK_Sp_PRP_w <- wilcox_pairwise(cat = "potatoes_rice_pasta", country1 = "UK", country2 = "Spain")
+Sp_Po_PRP_w <- wilcox_pairwise(cat = "potatoes_rice_pasta", country1 = "Spain", country2 = "Poland")
+wilcox_PRP_no_Sw <- c(UK_Po_PRP_w$p.value, UK_Sp_PRP_w$p.value, Sp_Po_PRP_w$p.value)
+Country1 <- c("UK", "UK", "Spain")
+Country2 <- c("Poland", "Spain", "Poland")
+wilcox_PRP_p_no_Sw <- tibble(Country1, Country2, wilcox_PRP_no_Sw)
+wilcox_PRP_p_no_Sw$holm_adjusted_w_PRP_no_Sw <- p.adjust(wilcox_PRP_no_Sw, method = "holm")
+wilcox_PRP_p_no_Sw <- mutate(wilcox_PRP_p_no_Sw, "sig at p = 0.05?" = case_when(
+                                                           holm_adjusted_w_PRP_no_Sw < 0.05 ~
+                                                          "significant",  
+                                                          holm_adjusted_w_PRP_no_Sw
+                                                           > 0.05 ~ "not significant"))
+wilcox_PRP_p_no_Sw
+```
+
+### dairy and fats
+```{r}
+UK_Po_DF_w <- wilcox_pairwise(cat = "dairy_fats", country1 = "UK", country2 = "Poland")
+UK_Sp_DF_w <- wilcox_pairwise(cat = "dairy_fats", country1 = "UK", country2 = "Spain")
+Sp_Po_DF_w <- wilcox_pairwise(cat = "dairy_fats", country1 = "Spain", country2 = "Poland")
+wilcox_DF_no_Sw <- c(UK_Po_DF_w$p.value, UK_Sp_DF_w$p.value, Sp_Po_DF_w$p.value)
+Country1 <- c("UK", "UK", "Spain")
+Country2 <- c("Poland", "Spain", "Poland")
+wilcox_DF_p_no_Sw <- tibble(Country1, Country2, wilcox_DF_no_Sw)
+wilcox_DF_p_no_Sw$holm_adjusted_w_DF_no_Sw <- p.adjust(wilcox_DF_no_Sw, method = "holm")
+wilcox_DF_p_no_Sw <- mutate(wilcox_DF_p_no_Sw, "sig at p = 0.05?" = case_when(
+                                                           holm_adjusted_w_DF_no_Sw < 0.05 ~
+                                                          "significant",  
+                                                          holm_adjusted_w_DF_no_Sw
+                                                           > 0.05 ~ "not significant"))
+wilcox_DF_p_no_Sw
+```
+
+### sweets and snacks
+```{r}
+UK_Po_SwS_w <- wilcox_pairwise(cat = "sweets_snacks", country1 = "UK", country2 = "Poland")
+UK_Sp_SwS_w <- wilcox_pairwise(cat = "sweets_snacks", country1 = "UK", country2 = "Spain")
+Sp_Po_SwS_w <- wilcox_pairwise(cat = "sweets_snacks", country1 = "Spain", country2 = "Poland")
+wilcox_SwS_no_Sw <- c(UK_Po_SwS_w$p.value, UK_Sp_SwS_w$p.value, Sp_Po_SwS_w$p.value)
+Country1 <- c("UK", "UK", "Spain")
+Country2 <- c("Poland", "Spain", "Poland")
+wilcox_SwS_p_no_Sw <- tibble(Country1, Country2, wilcox_SwS_no_Sw)
+wilcox_SwS_p_no_Sw$holm_adjusted_w_SwS_no_Sw <- p.adjust(wilcox_SwS_no_Sw, method = "holm")
+wilcox_SwS_p_no_Sw <- mutate(wilcox_SwS_p_no_Sw, "sig at p = 0.05?" = case_when(
+                                                           holm_adjusted_w_SwS_no_Sw < 0.05 ~
+                                                          "significant",  
+                                                          holm_adjusted_w_SwS_no_Sw
+                                                           > 0.05 ~ "not significant"))
+wilcox_SwS_p_no_Sw
+```
+
+### soups, sauces and spreads
+```{r}
+UK_Po_SSS_w <- wilcox_pairwise(cat = "soups_sauces_spreads", country1 = "UK", country2 = "Poland")
+UK_Sp_SSS_w <- wilcox_pairwise(cat = "soups_sauces_spreads", country1 = "UK", country2 = "Spain")
+Sp_Po_SSS_w <- wilcox_pairwise(cat = "soups_sauces_spreads", country1 = "Spain", country2 = "Poland")
+wilcox_SSS_no_Sw <- c(UK_Po_SSS_w$p.value, UK_Sp_SSS_w$p.value, Sp_Po_SSS_w$p.value)
+Country1 <- c("UK", "UK", "Spain")
+Country2 <- c("Poland", "Spain", "Poland")
+wilcox_SSS_p_no_Sw <- tibble(Country1, Country2, wilcox_SSS_no_Sw)
+wilcox_SSS_p_no_Sw$holm_adjusted_w_SSS_no_Sw <- p.adjust(wilcox_SSS_no_Sw, method = "holm")
+wilcox_SSS_p_no_Sw <- mutate(wilcox_SSS_p_no_Sw, "sig at p = 0.05?" = case_when(
+                                                           holm_adjusted_w_SSS_no_Sw < 0.05 ~
+                                                          "significant",  
+                                                          holm_adjusted_w_SSS_no_Sw
+                                                           > 0.05 ~ "not significant"))
+wilcox_SSS_p_no_Sw
+```
+
+### drinks
+```{r}
+UK_Po_D_w <- wilcox_pairwise(cat = "drinks", country1 = "UK", country2 = "Poland")
+UK_Sp_D_w <- wilcox_pairwise(cat = "drinks", country1 = "UK", country2 = "Spain")
+Sp_Po_D_w <- wilcox_pairwise(cat = "drinks", country1 = "Spain", country2 = "Poland")
+wilcox_D_no_Sw <- c(UK_Po_D_w$p.value, UK_Sp_D_w$p.value, Sp_Po_D_w$p.value)
+Country1 <- c("UK", "UK", "Spain")
+Country2 <- c("Poland", "Spain", "Poland")
+wilcox_D_p_no_Sw <- tibble(Country1, Country2, wilcox_D_no_Sw)
+wilcox_D_p_no_Sw$holm_adjusted_w_D_no_Sw <- p.adjust(wilcox_D_no_Sw, method = "holm")
+wilcox_D_p_no_Sw <- mutate(wilcox_D_p_no_Sw, "sig at p = 0.05?" = case_when(
+                                                           holm_adjusted_w_D_no_Sw < 0.05 ~
+                                                          "significant",  
+                                                          holm_adjusted_w_D_no_Sw
+                                                           > 0.05 ~ "not significant"))
+wilcox_D_p_no_Sw
+```
+
+### fruits
+```{r}
+UK_Po_Fr_w <- wilcox_pairwise(cat = "fruits", country1 = "UK", country2 = "Poland")
+UK_Sp_Fr_w <- wilcox_pairwise(cat = "fruits", country1 = "UK", country2 = "Spain")
+Sp_Po_Fr_w <- wilcox_pairwise(cat = "fruits", country1 = "Spain", country2 = "Poland")
+wilcox_Fr_no_Sw <- c(UK_Po_Fr_w$p.value, UK_Sp_Fr_w$p.value, Sp_Po_Fr_w$p.value)
+Country1 <- c("UK", "UK", "Spain")
+Country2 <- c("Poland", "Spain", "Poland")
+wilcox_Fr_p_no_Sw <- tibble(Country1, Country2, wilcox_Fr_no_Sw)
+wilcox_Fr_p_no_Sw$holm_adjusted_w_Fr_no_Sw <- p.adjust(wilcox_Fr_no_Sw, method = "holm")
+wilcox_Fr_p_no_Sw <- mutate(wilcox_Fr_p_no_Sw, "sig at p = 0.05?" = case_when(
+                                                           holm_adjusted_w_Fr_no_Sw < 0.05 ~
+                                                          "significant",  
+                                                          holm_adjusted_w_Fr_no_Sw
+                                                           > 0.05 ~ "not significant"))
+wilcox_Fr_p_no_Sw
+```
+
+#### PCA
+#### For all food groups excluding trout (28)
+```{r,eval = FALSE}
+library(devtools)
+library(ggbiplot)
+DOMINO_category_wide <- mutate(DOMINO, meat_fish = rowSums(DOMINO[2:28])) %>%
+  mutate(bread_sav_biscuits = rowSums(DOMINO[29:35])) %>%
+  mutate(cereals = rowSums(DOMINO[36:39])) %>%
+  mutate(potatoes_rice_pasta = rowSums(DOMINO[40:57])) %>%
+  mutate(dairy_fats = rowSums(DOMINO[58:79])) %>%
+  mutate(on_bread_veg = rowSums(DOMINO[80:88])) %>%
+  mutate(sweets_snacks = rowSums(DOMINO[89:115])) %>%
+  mutate(soups_sauces_spreads = rowSums(DOMINO[116:128])) %>%
+  mutate(drinks = rowSums(DOMINO[129:146])) %>%
+  mutate(fruits = rowSums(DOMINO[147:163])) %>%
+  mutate(vegetables = rowSums(DOMINO[164:196]))
+DOMINO_category_wide <- DOMINO_category_wide[,-c(2:196)]
+
+DOMINO_category_sd <- purrr::map_dbl(
+  .x = DOMINO_category_wide, 
+  .f = sd
+) 
+
+DOMINO_cat.pca <- prcomp((select(DOMINO_category_wide, !"COUNTRY")), center = TRUE, scale. = TRUE)
+summary(DOMINO_cat.pca)
+ggbiplot(DOMINO_cat.pca, ellipse = TRUE, obs.scale= 1, labels = rownames(DOMINO_category_wide), 
+         groups = DOMINO_category_wide$COUNTRY)
 ```
