@@ -1,0 +1,46 @@
+things for alex.
+
+this is how I converted the categories from the long format to wide format (summing all the food items for the relavent category).
+
+DOMINO_wide <- DOMINO_cat %>%
+  na.omit() %>%
+  select(-FOOD) %>%
+  pivot_wider(id_cols = ID:COUNTRY, names_from = CATEGORY, values_from = FFQ, values_fn = sum) %>%
+  select(3:13)
+
+time for some graphs
+not sure if this one is useful or not but its category means by country (bar plot)
+
+mean_cat_plot <- ggplot (data = DOMINO_cat, mapping = aes(x = CATEGORY, y = FFQ)) + 
+  geom_col(aes(fill = COUNTRY), position = "dodge", stat = "mean") +
+  labs(title = "Cross-cultural Nutrional Differences by Food Category") +
+  xlab("Food Category") +
+  ylab("Mean FFQ Score") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1)) +
+  scale_fill_brewer(palette="Spectral")
+print(mean_cat_plot)
+
+and these are the box plots and violin plots
+
+box_food <- ggplot(DOMINO_cat, aes(x=CATEGORY, y=FFQ, fill = COUNTRY)) +
+  geom_boxplot(na.rm = TRUE, outlier.shape = NA) +
+  geom_jitter(width = 0.2, alpha = 0.025) +
+  labs(title = "Cross-cultural Nutrional Differences by Food Category") +
+  xlab("Food Category") +
+  ylab("Mean FFQ Score") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  scale_fill_brewer(palette="Spectral")
+print(box_food)
+
+vio_food <- ggplot(DOMINO_cat, aes(x=CATEGORY, y=FFQ, fill = COUNTRY)) +
+  geom_violin(na.rm = TRUE, outlier.shape = NA) +
+  geom_jitter(width = 0.2, alpha = 0.025) +
+  labs(title = "Cross-cultural Nutrional Differences by Food Category") +
+  xlab("Food Category") +
+  ylab("Mean FFQ Score") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  scale_fill_brewer(palette="Spectral")
+print(vio_food)
