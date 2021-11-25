@@ -32,17 +32,17 @@ DOMINO <- rowid_to_column(DOMINO, "PARTICIPANT")
 ## Add food group category to DOMINO
 ```{r, echo = FALSE}
 #### Group by major food groups by adding category column to DOMINO table
-MF <- colnames(DOMINO)[2:28]
-BSB <- colnames(DOMINO)[29:35]
-C <- colnames(DOMINO)[36:39]
-PRP <- colnames(DOMINO)[40:57]
-DF <- colnames(DOMINO)[58:79]
-OBV <- colnames(DOMINO)[80:88]
-SwS <- colnames(DOMINO)[89:115]
-SSS <- colnames(DOMINO)[116:128]
-D <- colnames(DOMINO)[129:146]
-Fr <- colnames(DOMINO)[147:163]
-V <- colnames(DOMINO)[164:196]
+MF <- colnames(DOMINO)[3:29]
+BSB <- colnames(DOMINO)[30:36]
+C <- colnames(DOMINO)[37:40]
+PRP <- colnames(DOMINO)[41:58]
+DF <- colnames(DOMINO)[59:80]
+OBV <- colnames(DOMINO)[81:89]
+SwS <- colnames(DOMINO)[90:116]
+SSS <- colnames(DOMINO)[117:129]
+D <- colnames(DOMINO)[130:147]
+Fr <- colnames(DOMINO)[148:164]
+V <- colnames(DOMINO)[165:197]
 
 DOMINO_category <- pivot_longer(DOMINO, BEEF:OLIVES, names_to = "FOOD", values_to = "daily_FFQ_score") %>%
   mutate(category = case_when(FOOD %in% MF ~ "meat_fish",
