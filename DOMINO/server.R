@@ -76,13 +76,13 @@ shinyServer(function(input, output) {
             add_column(CATEGORY = "POTATOES, RICE & PASTA")
         
         DairyFats <- DOMINO %>%
-            select(COUNTRY, ID, SICREAM:OTHSALAD) %>%
-            pivot_longer(cols = SICREAM:OTHSALAD, names_to = "FOOD", values_to = "FFQ") %>%
+            select(COUNTRY, ID, SICREAM:SOURMILK) %>%
+            pivot_longer(cols = SICREAM:SOURMILK, names_to = "FOOD", values_to = "FFQ") %>%
             add_column(CATEGORY = "DAIRY & FATS")
         
         OnBreadVeg <- DOMINO %>%
-            select(COUNTRY, ID, BUTTERMILK:VLOWSPREAD) %>%
-            pivot_longer(cols = BUTTERMILK:VLOWSPREAD, names_to = "FOOD", values_to = "FFQ") %>%
+            select(COUNTRY, ID, BUTTER:VLOWSPREAD) %>%
+            pivot_longer(cols = BUTTER:VLOWSPREAD, names_to = "FOOD", values_to = "FFQ") %>%
             add_column(CATEGORY = "TOPPING")
         
         SweetSnacks <- DOMINO %>%
