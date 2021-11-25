@@ -20,7 +20,11 @@ library(sm)
 library(tibble)
 library(devtools)
 library(ggbiplot)
-# Define server logic required to draw a histogram
+
+cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+#http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/ = source for colour blind friendly palettes 
+
+# Define server logic.
 shinyServer(function(input, output) {
     
     
@@ -140,7 +144,8 @@ shinyServer(function(input, output) {
                 theme_minimal() +
                 theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1)) +
                 theme(legend.position="bottom") +
-                scale_fill_brewer(palette="Spectral")}
+                scale_fill_manual(values=cbbPalette)
+                }
         else
         {DOMINO_grouped <-getcategories()
         ggplot (data = getcategories(), mapping = aes(x = CATEGORY, y = FFQ)) + 
@@ -150,7 +155,7 @@ shinyServer(function(input, output) {
             ylab("FFQ Score") +
             theme_minimal() +
             theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1)) +
-            scale_fill_brewer(palette="Spectral")}
+            scale_fill_manual(values=cbbPalette)}
     })
     
     output$plot <- renderPlot({
@@ -171,10 +176,10 @@ shinyServer(function(input, output) {
         DOMINO_pca <- prcomp(DOMINO_food, center = TRUE, scale. = TRUE)
         DOMINO_countries <- as_vector(DOMINO%>%
                                           select(COUNTRY))
-        DOMINO_bp <- ggbiplot(DOMINO_pca, choices = 1:2, ellipse = TRUE,  groups = DOMINO_countries)+coord_cartesian(xlim = ranges2$x, ylim = ranges2$y) + ggtitle("PCA Bioplot of Data") #Comparing PC1 and PC2
-        #DOMINO_bp2 <- ggbiplot(DOMINO_pca, choices = 1:3, ellipse = TRUE,  groups = DOMINO_countries)+coord_cartesian(xlim = ranges2$x, ylim = ranges2$y) + ggtitle("PCA Bioplot of Data") #Comparing PC1 and PC3
-        #DOMINO_bp2 <- ggbiplot(DOMINO_pca, choices = 2:3, ellipse = TRUE,  groups = DOMINO_countries)+coord_cartesian(xlim = ranges2$x, ylim = ranges2$y) + ggtitle("PCA Bioplot of Data") #Comparing PC2 and PC3
-        #
+        DOMINO_bp <- ggbiplot(DOMINO_pca, choices = 1:2, ellipse = TRUE,  groups = DOMINO_countries)+coord_cartesian(xlim = ranges2$x, ylim = ranges2$y) + ggtitle("PCA Bioplot of Data") + scale_color_manual(values=cbbPalette) #Comparing PC1 and PC2
+        #DOMINO_bp2 <- ggbiplot(DOMINO_pca, choices = 1:3, ellipse = TRUE,  groups = DOMINO_countries)+coord_cartesian(xlim = ranges2$x, ylim = ranges2$y) + ggtitle("PCA Bioplot of Data") + scale_color_manual(values=cbbPalette) #Comparing PC1 and PC3
+        #DOMINO_bp2 <- ggbiplot(DOMINO_pca, choices = 2:3, ellipse = TRUE,  groups = DOMINO_countries)+coord_cartesian(xlim = ranges2$x, ylim = ranges2$y) + ggtitle("PCA Bioplot of Data") + scale_color_manual(values=cbbPalette) #Comparing PC2 and PC3
+        #These are the different pca plots
         }
         else{
             DOMINO<-getdata()
@@ -186,7 +191,9 @@ shinyServer(function(input, output) {
             DOMINO_cat_pca <- prcomp(DOMINO_wide, center = TRUE, scale. = TRUE)
             DOMINO_countries <- as_vector(DOMINO%>%
                                               select(COUNTRY))
-            DOMINO_bp <- ggbiplot(DOMINO_cat_pca, ellipse = TRUE,  groups = DOMINO_countries)+coord_cartesian(xlim = ranges2$x, ylim = ranges2$y)
+            DOMINO_bp <- ggbiplot(DOMINO_cat_pca, choices = 1:2, ellipse = TRUE,  groups = DOMINO_countries)+coord_cartesian(xlim = ranges2$x, ylim = ranges2$y) + ggtitle("PCA Bioplot of Data") + scale_color_manual(values=cbbPalette)
+            #DOMINO_bp2 <- ggbiplot(DOMINO_cat_pca, choices = 1:3, ellipse = TRUE,  groups = DOMINO_countries)+coord_cartesian(xlim = ranges2$x, ylim = ranges2$y) + ggtitle("PCA Bioplot of Data") + scale_color_manual(values=cbbPalette)
+            #DOMINO_bp3 <- ggbiplot(DOMINO_cat_pca, choices = 2:3,  ellipse = TRUE,  groups = DOMINO_countries)+coord_cartesian(xlim = ranges2$x, ylim = ranges2$y) + ggtitle("PCA Bioplot of Data") + scale_color_manual(values=cbbPalette)
             #return(DOMINO_cat_bp)
         }
         return(DOMINO_bp)
@@ -226,7 +233,11 @@ shinyServer(function(input, output) {
         if(input$choice =='Individual Foods')
         {summary(getdata())}
         else
-            summary(getcategories()$CATEGORY)
+            summary(DOMINO_wide <- getcategories() %>%
+                        na.omit() %>%
+                        select(-FOOD) %>%
+                        pivot_wider(id_cols = ID:COUNTRY, names_from = CATEGORY, values_from = FFQ, values_fn = sum) %>%
+                        select(3:13))
     })
     
     output$summary<-renderPrint({summ()})
@@ -245,6 +256,7 @@ shinyServer(function(input, output) {
                  y = "proportion of values missing", 
                  title = "Proportion of values which are missing for each food group across all countries")+
             theme_minimal() +
+            scale_colour_manual(values=cbbPalette) +
             theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1))
     })
     output$missingno1<-renderPlot({
@@ -267,7 +279,7 @@ shinyServer(function(input, output) {
                      stat = 'identity', alpha=0.8) +
             scale_x_discrete(limits = levels) +
             scale_fill_manual(name = "", 
-                              values = c('steelblue', 'tomato3'), labels = c("Present", "Missing")) +
+                              values = cbbPalette, labels = c("Present", "Missing")) +
             coord_flip() +
             labs(title = "Percentage of missing values", x =
                      'Variable', y = "% of missing values")

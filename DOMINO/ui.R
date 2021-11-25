@@ -19,7 +19,7 @@ shinyUI(fluidPage(
         base_font = font_google("Outfit"),
         code_font = font_google("Roboto Mono"),
         heading_font = font_google("Fredoka One"),
-        font_scale = 1.2,
+        font_scale = 1.75,
     ),
 
     
