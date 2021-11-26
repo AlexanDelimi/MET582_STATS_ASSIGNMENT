@@ -53,8 +53,8 @@ shinyUI(fluidPage(
         mainPanel(
             tabsetPanel(
                 tabPanel("Summary",  verbatimTextOutput("summary")),
-                tabPanel("Summary Plot",plotOutput('plot',height = 600, brush = brushOpts(id = "plot2_brush", clip = TRUE, resetOnNew = TRUE))),
-                tabPanel("PCA",plotOutput('pca',height = 600, brush = brushOpts(id = "plot2_brush", clip = TRUE, resetOnNew = TRUE)),verbatimTextOutput("pca_summary")),
+                tabPanel("Summary Plot",plotOutput('plot',height = 600, brush = brushOpts(id = "plot2_brush", clip = TRUE, resetOnNew = TRUE)), plotOutput('boxplot', height = 600), plotOutput('vioplot', height = 600)),
+                tabPanel("PCA", plotOutput('pca',height = 600, brush = brushOpts(id = "plot2_brush", clip = TRUE, resetOnNew = TRUE)),verbatimTextOutput("pca_summary")),
                 tabPanel("Missingness",plotOutput("missingno"),plotOutput('missingno1'),uiOutput("country"),plotOutput('missingno2')),
                 tabPanel("Kruskal-Wallis",selectInput('category', "Choose the category to perform Kruskal Wallace test on", choices=c("Meat and Fish"="MEAT & FISH",
                                                                                                                                       "Bread and Savoury Biscuits"="BREAD & BISCUITS",

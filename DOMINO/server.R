@@ -158,10 +158,56 @@ shinyServer(function(input, output) {
             scale_fill_manual(values=cbbPalette)}
     })
     
-    output$plot <- renderPlot({
+     output$plot <- renderPlot({
         getsummary()
         
     })
+
+     getsummary1 <-reactive({
+         if(input$choice =='Individual Foods')
+         {
+             
+         }
+         else
+         {DOMINO_grouped <-getcategories()
+         ggplot(DOMINO_grouped, aes(x=CATEGORY, y=FFQ, fill = COUNTRY)) +
+             geom_boxplot(na.rm = TRUE, outlier.shape = NA) +
+             geom_jitter(width = 0.2, alpha = 0.025) +
+             labs(title = "Cross-cultural Nutrional Differences by Food Category") +
+             xlab("Food Category") +
+             ylab("Mean FFQ Score") +
+             theme_minimal() +
+             theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+             scale_fill_manual(values=cbbPalette)}
+     })
+     
+     output$boxplot <- renderPlot({
+         getsummary1()
+         
+     })
+
+     getsummary2 <-reactive({
+         if(input$choice =='Individual Foods')
+         {
+             
+         }
+         else
+         {DOMINO_grouped <-getcategories()
+         ggplot(DOMINO_grouped, aes(x=CATEGORY, y=FFQ, fill = COUNTRY)) +
+             geom_violin(na.rm = TRUE, outlier.shape = NA) +
+             geom_jitter(width = 0.2, alpha = 0.025) +
+             labs(title = "Cross-cultural Nutrional Differences by Food Category") +
+             xlab("Food Category") +
+             ylab("Mean FFQ Score") +
+             theme_minimal() +
+             theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+             scale_fill_manual(values=cbbPalette)}
+     })
+     
+     output$vioplot <- renderPlot({
+         getsummary2()
+         
+     })
     
     getpca<-reactive({
         if(input$choice =='Individual Foods')
