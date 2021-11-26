@@ -129,7 +129,7 @@ ggplot(PCA_loadings) +
   scale_x_discrete(guide = guide_axis(n.dodge = 2))+
   xlab("Food category") +
   ylab("Loading") +
-  ylim(c(-0.7, 0.7))
+  ylim(c(-0.7, 0.7)) +
   labs(title = "PC1 variable loadings") +
   theme(legend.position = "bottom")
 # variables with the strongest effects on PC1: potatoes, rice and pasta/ soups, sauces and spreads/ dairy and fats/ cereals -> but all low strength of association to PC1
