@@ -1,0 +1,519 @@
+---
+title: "pca"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load data
+```{r, echo = FALSE, warning = FALSE}
+library(tidyverse)
+setwd("~/Documents")
+DOMINO <- read_csv(file = "FFQ_for_MET582.csv", col_names = TRUE, na = "NA") %>%
+  dplyr::select(COUNTRY:OLIVES)
+
+DOMINO[DOMINO == -9] <- NA
+DOMINO[DOMINO == -8] <- NA
+DOMINO[DOMINO == 1] <- 0
+DOMINO[DOMINO == 2] <- 0.067
+DOMINO[DOMINO == 3] <- 0.143
+DOMINO[DOMINO == 4] <- 0.429
+DOMINO[DOMINO == 5] <- 0.756
+DOMINO[DOMINO == 6] <- 1
+DOMINO[DOMINO == 7] <- 2.5
+DOMINO[DOMINO == 8] <- 4.5
+DOMINO[DOMINO == 9] <- 6
+
+DOMINO <- rowid_to_column(DOMINO, "PARTICIPANT")
+```
+
+## Add food group category to DOMINO
+```{r, echo = FALSE, warning = FALSE}
+#### Group by major food groups by adding category column to DOMINO table
+MF <- colnames(DOMINO)[3:29]
+BSB <- colnames(DOMINO)[30:36]
+C <- colnames(DOMINO)[37:40]
+PRP <- colnames(DOMINO)[41:58]
+DF <- colnames(DOMINO)[59:80]
+OBV <- colnames(DOMINO)[81:89]
+SwS <- colnames(DOMINO)[90:116]
+SSS <- colnames(DOMINO)[117:129]
+D <- colnames(DOMINO)[130:147]
+Fr <- colnames(DOMINO)[148:164]
+V <- colnames(DOMINO)[165:197]
+
+DOMINO_category <- pivot_longer(DOMINO, BEEF:OLIVES, names_to = "FOOD", values_to = "daily_FFQ_score") %>%
+  mutate(category = case_when(FOOD %in% MF ~ "meat_fish",
+                            FOOD %in% BSB ~ "bread_sav_biscuits",
+                            FOOD %in% C ~ "cereals",
+                            FOOD %in% PRP ~ "potatoes_rice_pasta",
+                            FOOD %in% DF ~ "dairy_fats",
+                            FOOD %in% OBV ~ "on_bread_veg",
+                            FOOD %in% SwS ~ "sweets_snacks",
+                            FOOD %in% SSS ~ "soups_sauces_spreads",
+                            FOOD %in% D ~ "drinks",
+                            FOOD %in% Fr ~ "fruits",
+                            FOOD %in% V ~ "vegetables")) 
+```
+
+## PCA for food categories
+```{r, echo = TRUE, warning = FALSE}
+DOMINO_category_wide <- DOMINO_category %>%
+  na.omit() %>%
+  dplyr::select(-FOOD) %>%
+  pivot_wider(id_cols = PARTICIPANT:COUNTRY, names_from = category, values_from = daily_FFQ_score, values_fn = sum)
+
+library(devtools)
+library(ggbiplot)
+DOMINO_cat.pca <- prcomp(dplyr::select(DOMINO_category_wide, -COUNTRY, -PARTICIPANT), center = TRUE, scale. = TRUE)
+summary(DOMINO_cat.pca)
+
+sd <- DOMINO_cat.pca$sdev
+loadings <- DOMINO_cat.pca$rotation
+rownames(loadings) <- colnames(DOMINO_cat.pca)
+scores <- DOMINO_cat.pca$x
+sqrt(1/ncol(DOMINO_category_wide))
+
+loading_threshold <- sqrt(1/ncol(dplyr::select(DOMINO_category_wide, meat_fish:vegetables)))
+
+# Plot PC1 against PC2
+ggbiplot(DOMINO_cat.pca, ellipse = TRUE, obs.scale= 1, labels = DOMINO_category_wide$PARTICIPANT, 
+         groups = DOMINO_category_wide$COUNTRY) +
+  theme_bw()
+
+# Plot PC1 against PC3
+ggbiplot(DOMINO_cat.pca, choices = c(1,3), ellipse = TRUE, obs.scale= 1, labels =
+           DOMINO_category_wide$PARTICIPANT, groups = DOMINO_category_wide$COUNTRY) +
+  theme_bw()
+
+# Plot PC2 against PC3
+ggbiplot(DOMINO_cat.pca, choices = c(2,3), ellipse = TRUE, obs.scale= 1, labels =
+           DOMINO_category_wide$PARTICIPANT, groups = DOMINO_category_wide$COUNTRY) +
+  theme_bw()
+
+# Cumulative proportions of principal components
+cumulative_proportion <- cumsum(DOMINO_cat.pca$sdev^2 / sum(DOMINO_cat.pca$sdev^2))
+principal_component <- c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
+pca_cumulative_prop <- tibble(principal_component, cumulative_proportion)
+
+ggplot(data = pca_cumulative_prop, aes(x = principal_component, y = cumulative_proportion)) +
+  geom_point() +
+  geom_line() +
+  ylab("Cumulative proportion of variance explained") +
+  xlab("Number of principal components") +
+  labs(title = "Cumulative proportion of variance explained by principal components") +
+  scale_x_continuous(breaks = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)) +
+  theme_bw()
+```
+
+# PCA loadings (need to choose threshold levels)
+```{r warning = FALSE}
+library(klaR)
+category_loadings <- as.data.frame(DOMINO_cat.pca$rotation[,1:3])
+# loading is a measure of the correlation between the original variables and the principal components (sign = positive or negative)
+# http://strata.uga.edu/8370/lecturenotes/principalComponents.html
+
+food_categories <- rownames(category_loadings)
+PCA_loadings <- cbind(food_categories, category_loadings)
+loading_intercepts <- data.frame(y = c(loading_threshold, -loading_threshold), type = factor(c(1, 1)))
+
+# Loadings for PC1
+ggplot(PCA_loadings) +
+  geom_col(aes(x = food_categories, y = PC1)) +
+  geom_hline(data = loading_intercepts, aes(yintercept = y, colour = type), linetype = "dashed") +
+  scale_colour_manual(values = c("green"), 
+                      labels = c("High"),
+                      name = "Strength of association to PC2") +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2))+
+  xlab("Food category") +
+  ylab("Loading") +
+  ylim(c(-0.7, 0.7))
+  labs(title = "PC1 variable loadings") +
+  theme(legend.position = "bottom")
+# variables with the strongest effects on PC1: potatoes, rice and pasta/ soups, sauces and spreads/ dairy and fats/ cereals -> but all low strength of association to PC1
+
+# Loadings for PC2
+ggplot(PCA_loadings) +
+  geom_col(aes(x = food_categories, y = PC2)) +
+  geom_hline(data = loading_intercepts, aes(yintercept = y, colour = type), linetype = "dashed") +
+  scale_colour_manual(values = c("green"), 
+                      labels = c("High"),
+                      name = "Strength of association to PC2") +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  xlab("Food category") +
+  ylab("Loading") +
+  labs(title = "PC2 variable loadings") +
+  theme(legend.position = "bottom")
+# variables with the strongest effects on PC2: fruits/ sweets and snacks (both medium strength association to PC2)/ (vegetables- low strength association to PC2)
+
+# Loadings for PC3
+ggplot(PCA_loadings) +
+  geom_col(aes(x = food_categories, y = PC3)) +
+  geom_hline(data = loading_intercepts, aes(yintercept = y, colour = type), linetype = "dashed") +
+  scale_colour_manual(values = c("green"), 
+                      labels = c("High"),
+                      name = "Strength of association to PC3") +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  xlab("Food category") +
+  ylab("Loading") +
+  labs(title = "PC3 variable loadings") +
+  theme(legend.position = "bottom") 
+# variables with the strongest effects on PC3: cereals/ meat and fish/ drinks/ on bread and vegetables/ vegetables/ bread and savoury biscuits (but all low association with PC3)
+
+category_loadings_all <- as.data.frame(DOMINO_cat.pca$rotation)
+food_categories_all <- rownames(category_loadings_all)
+PCA_loadings_all <- cbind(food_categories, category_loadings_all)
+loading_intercepts <- data.frame(y = c(loading_threshold, -loading_threshold), type = factor(c(1, 1)))
+
+# Loadings for PC4
+ggplot(PCA_loadings_all) +
+  geom_col(aes(x = food_categories_all, y = PC4)) +
+  geom_hline(data = loading_intercepts, aes(yintercept = y, colour = type), linetype = "dashed") +
+  scale_colour_manual(values = c("green"), 
+                      labels = c("High"),
+                      name = "Strength of association to PC4") +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  xlab("Food category") +
+  ylab("Loading") +
+  labs(title = "PC4 variable loadings") +
+  theme(legend.position = "bottom") 
+
+# Loadings for PC5
+ggplot(PCA_loadings_all) +
+  geom_col(aes(x = food_categories_all, y = PC5)) +
+  geom_hline(data = loading_intercepts, aes(yintercept = y, colour = type), linetype = "dashed") +
+  scale_colour_manual(values = c("green"), 
+                      labels = c("High"),
+                      name = "Strength of association to PC5") +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  xlab("Food category") +
+  ylab("Loading") +
+  labs(title = "PC5 variable loadings") +
+  theme(legend.position = "bottom") 
+
+# Loadings for PC6
+ggplot(PCA_loadings_all) +
+  geom_col(aes(x = food_categories_all, y = PC6)) +
+  geom_hline(data = loading_intercepts, aes(yintercept = y, colour = type), linetype = "dashed") +
+  scale_colour_manual(values = c("green"), 
+                      labels = c("High"),
+                      name = "Strength of association to PC6") +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  xlab("Food category") +
+  ylab("Loading") +
+  labs(title = "PC6 variable loadings") +
+  theme(legend.position = "bottom")
+
+# Loadings for PC7
+ggplot(PCA_loadings_all) +
+  geom_col(aes(x = food_categories_all, y = PC7)) +
+  geom_hline(data = loading_intercepts, aes(yintercept = y, colour = type), linetype = "dashed") +
+  scale_colour_manual(values = c("green"), 
+                      labels = c("High"),
+                      name = "Strength of association to PC7") +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  xlab("Food category") +
+  ylab("Loading") +
+  labs(title = "PC7 variable loadings") +
+  theme(legend.position = "bottom")
+
+# Loadings for PC8
+ggplot(PCA_loadings_all) +
+  geom_col(aes(x = food_categories_all, y = PC8)) +
+  geom_hline(data = loading_intercepts, aes(yintercept = y, colour = type), linetype = "dashed") +
+  scale_colour_manual(values = c("green"), 
+                      labels = c("High"),
+                      name = "Strength of association to PC8") +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  xlab("Food category") +
+  ylab("Loading") +
+  labs(title = "PC8 variable loadings") +
+  theme(legend.position = "bottom") 
+
+# Loadings for PC9
+ggplot(PCA_loadings_all) +
+  geom_col(aes(x = food_categories_all, y = PC9)) +
+  geom_hline(data = loading_intercepts, aes(yintercept = y, colour = type), linetype = "dashed") +
+  scale_colour_manual(values = c("green"), 
+                      labels = c("High"),
+                      name = "Strength of association to PC9") +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  xlab("Food category") +
+  ylab("Loading") +
+  labs(title = "PC9 variable loadings") +
+  theme(legend.position = "bottom") 
+
+# Loadings for PC8
+ggplot(PCA_loadings_all) +
+  geom_col(aes(x = food_categories_all, y = PC8)) +
+  geom_hline(data = loading_intercepts, aes(yintercept = y, colour = type), linetype = "dashed") +
+  scale_colour_manual(values = c("green"), 
+                      labels = c("High"),
+                      name = "Strength of association to PC8") +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  xlab("Food category") +
+  ylab("Loading") +
+  labs(title = "PC8 variable loadings") +
+  theme(legend.position = "bottom") 
+
+# Loadings for PC9
+ggplot(PCA_loadings_all) +
+  geom_col(aes(x = food_categories_all, y = PC9)) +
+  geom_hline(data = loading_intercepts, aes(yintercept = y, colour = type), linetype = "dashed") +
+  scale_colour_manual(values = c("green"), 
+                      labels = c("High"),
+                      name = "Strength of association to PC9") +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  xlab("Food category") +
+  ylab("Loading") +
+  labs(title = "PC9 variable loadings") +
+  theme(legend.position = "bottom") 
+
+# Loadings for PC10
+ggplot(PCA_loadings_all) +
+  geom_col(aes(x = food_categories_all, y = PC10)) +
+  geom_hline(data = loading_intercepts, aes(yintercept = y, colour = type), linetype = "dashed") +
+  scale_colour_manual(values = c("green"), 
+                      labels = c("High"),
+                      name = "Strength of association to PC10") +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  xlab("Food category") +
+  ylab("Loading") +
+  labs(title = "PC10 variable loadings") +
+  theme(legend.position = "bottom") 
+
+# Loadings for PC11
+ggplot(PCA_loadings_all) +
+  geom_col(aes(x = food_categories_all, y = PC11)) +
+  geom_hline(data = loading_intercepts, aes(yintercept = y, colour = type), linetype = "dashed") +
+  scale_colour_manual(values = c("green"), 
+                      labels = c("High"),
+                      name = "Strength of association to PC11") +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  xlab("Food category") +
+  ylab("Loading") +
+  labs(title = "PC11 variable loadings") +
+  theme(legend.position = "bottom") 
+```
+
+# PCA loadings (no threshold levels)
+```{r warning = FALSE, eval = FALSE}
+library(klaR)
+food_categories <- rownames(category_loadings)
+PCA_loadings <- cbind(food_categories, category_loadings)
+break_levels <- c(0.8, 0.6, 0.4, 0.2, 0, -0.2, -0.4, -0.6, -0.8)
+
+ggplot(PCA_loadings) +
+  geom_col(aes(x = food_categories, y = PC1)) +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  xlab("Food category") +
+  scale_y_continuous(limits = c(-0.6, 0.6),
+                     breaks = break_levels) +
+  ylab("Loading") +
+  labs(title = "PC1 variable loadings") +
+  theme_bw()
+# variables with the strongest effects on PC1: potatoes, rice and pasta/ soups, sauces and spreads/ dairy and fats/ cereals -> but all low strength of association to PC1
+
+ggplot(PCA_loadings) +
+  geom_col(aes(x = food_categories, y = PC2)) +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  xlab("Food category") +
+  scale_y_continuous(limits = c(-0.6, 0.6),
+                     breaks = break_levels) +
+  ylab("Loading") +
+  labs(title = "PC2 variable loadings") +
+  theme_bw()
+# variables with the strongest effects on PC2: fruits/ sweets and snacks (both medium strength association to PC2)/ (vegetables- low strength association to PC2)
+
+ggplot(PCA_loadings) +
+  geom_col(aes(x = food_categories, y = PC3)) +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  xlab("Food category") +
+  scale_y_continuous(limits = c(-0.6, 0.6),
+                     breaks = break_levels) +
+  ylab("Loading") +
+  labs(title = "PC3 variable loadings") +
+  theme_bw()
+# variables with the strongest effects on PC3: cereals/ meat and fish/ drinks/ on bread and vegetables/ vegetables/ bread and savoury biscuits (but all low association with PC3)
+```
+
+## Covariance matrix
+```{r warning = FALSE}
+# covariance matrix for all food categories
+# covariance scale isn't limited to between -1 and 1 so can only make inferences on direction of relationship and variance
+# https://towardsdatascience.com/5-things-you-should-know-about-covariance-26b12a0516f1
+covariance_matrix_cat <- dplyr::select(DOMINO_category_wide, !(PARTICIPANT:COUNTRY)) %>%
+  cov()
+
+covariance_matrix <- dplyr::select(DOMINO, !(PARTICIPANT:COUNTRY)) %>%
+  cov() %>%
+  as_tibble()
+filter(covariance_matrix, if_any(everything(), ~ . < 0.8))
+
+
+correlation_matrix <- dplyr::select(DOMINO, !(PARTICIPANT:COUNTRY)) %>%
+  cor() %>%
+  as_tibble()
+FOOD <- colnames(correlation_matrix)
+correlation_matrix <- tibble(FOOD, correlation_matrix)
+```
+
+## Scatterplot matrices
+```{r warning = FALSE}
+library(GGally)
+scatterplot_matrix <- dplyr::select(DOMINO_category_wide, !(PARTICIPANT:COUNTRY))
+ggpairs(scatterplot_matrix, upper = list(continuous = wrap("cor", method = "spearman", size = 2)),
+        lower = list(continuous = wrap("points", alpha = 0.3, size=0.1))) +
+  theme_bw()
+
+# simpler visualisation:
+ggcorr(scatterplot_matrix, label = TRUE, method = c("all.obs", "spearman"))
+```
+
+## For each individual category
+### Meat and fish
+```{r warning = FALSE}
+# can't run with NAs so need to exclude trout???
+scatterplot_matrix_MF <- dplyr::select(DOMINO, !(PARTICIPANT:COUNTRY)) %>%
+  dplyr::select(BEEF:CARP)
+ggpairs(scatterplot_matrix_MF, upper = list(continuous = wrap("cor", method = "spearman", size = 
+                                                                2)),
+        lower = list(continuous = wrap("points", alpha = 0.3, size=0.1))) +
+  theme_bw()
+
+# simpler visualisation:
+ggcorr(scatterplot_matrix_MF, label = TRUE, method = c("all.obs", "spearman"))
+```
+
+### Bread and savoury biscuits
+```{r warning = FALSE}
+scatterplot_matrix_BSB <- dplyr::select(DOMINO, !(PARTICIPANT:COUNTRY)) %>%
+  dplyr::select(WHTBREADSL:RYEBRD)
+ggpairs(scatterplot_matrix_BSB, upper = list(continuous = wrap("cor", method = "spearman", size = 
+                                                                 2)),
+        lower = list(continuous = wrap("points", alpha = 0.3, size=0.1))) +
+  theme_bw()
+
+# simpler visualisation:
+ggcorr(scatterplot_matrix_BSB, label = TRUE, method = c("all.obs", "spearman"))
+```
+
+### Cereals
+```{r warning = FALSE}
+scatterplot_matrix_C <- dplyr::select(DOMINO, !(PARTICIPANT:COUNTRY)) %>%
+  dplyr::select(PORRIDGE:CEREALMUS)
+ggpairs(scatterplot_matrix_C, upper = list(continuous = wrap("cor", method = "spearman", size = 
+                                                               2)),
+        lower = list(continuous = wrap("points", alpha = 0.3, size=0.1))) +
+  theme_bw()
+
+# simpler visualisation:
+ggcorr(scatterplot_matrix_C, label = TRUE, method = c("all.obs", "spearman"))
+```
+
+### Potatoes, rice and pasta
+```{r warning = FALSE}
+scatterplot_matrix_PRP <- dplyr::select(DOMINO, !(PARTICIPANT:COUNTRY)) %>%
+  dplyr::select(POTSPREP:BARLYGRO)
+ggpairs(scatterplot_matrix_PRP, upper = list(continuous = wrap("cor", method = "spearman", size = 
+                                                                 2)),
+        lower = list(continuous = wrap("points", alpha = 0.3, size=0.1))) +
+  theme_bw()
+
+# simpler visualisation:
+ggcorr(scatterplot_matrix_PRP, label = TRUE, method = c("all.obs", "spearman"))
+```
+
+### Dairy and fats
+```{r warning = FALSE}
+scatterplot_matrix_DF <- dplyr::select(DOMINO, !(PARTICIPANT:COUNTRY)) %>%
+  dplyr::select(BUTTER:VLOWSPREAD)
+ggpairs(scatterplot_matrix_DF, upper = list(continuous = wrap("cor", method = "spearman", size = 
+                                                                2)),
+        lower = list(continuous = wrap("points", alpha = 0.3, size=0.1))) +
+  theme_bw()
+
+# simpler visualisation:
+ggcorr(scatterplot_matrix_DF, label = TRUE, method = c("all.obs", "spearman"))
+```
+
+### On bread and vegetables
+```{r warning = FALSE}
+scatterplot_matrix_OBV <- dplyr::select(DOMINO, !(PARTICIPANT:COUNTRY)) %>%
+  dplyr::select(BUTTER:VLOWSPREAD)
+ggpairs(scatterplot_matrix_OBV, upper = list(continuous = wrap("cor", method = "spearman", size = 
+                                                                 2)),
+        lower = list(continuous = wrap("points", alpha = 0.3, size=0.1))) +
+  theme_bw()
+
+# simpler visualisation:
+ggcorr(scatterplot_matrix_OBV, label = TRUE, method = c("all.obs", "spearman"))
+```
+
+### Sweets and snacks
+```{r warning = FALSE}
+scatterplot_matrix_SwS <- dplyr::select(DOMINO, !(PARTICIPANT:COUNTRY)) %>%
+  dplyr::select(SWBISCHO:JELLY)
+ggpairs(scatterplot_matrix_SwS, upper = list(continuous = wrap("cor", method = "spearman", size = 
+                                                                 2)),
+        lower = list(continuous = wrap("points", alpha = 0.3, size=0.1))) +
+  theme_bw()
+
+# simpler visualisation:
+ggcorr(scatterplot_matrix_SwS, label = TRUE, method = c("all.obs", "spearman"))
+```
+
+### Soups, sauces and spreads
+```{r warning = FALSE}
+scatterplot_matrix_SSS <- dplyr::select(DOMINO, !(PARTICIPANT:COUNTRY)) %>%
+  dplyr::select(VEGSOUP:COLDSOUP)
+ggpairs(scatterplot_matrix_SSS, upper = list(continuous = wrap("cor", method = "spearman", size = 
+                                                                 2)),
+        lower = list(continuous = wrap("points", alpha = 0.3, size=0.1))) +
+  theme_bw()
+
+# simpler visualisation:
+ggcorr(scatterplot_matrix_SSS, label = TRUE, method = c("all.obs", "spearman"))
+```
+
+### Drinks
+```{r warning = FALSE}
+scatterplot_matrix_D <- dplyr::select(DOMINO, !(PARTICIPANT:COUNTRY)) %>%
+  dplyr::select(TEA:TOMJUICE)
+ggpairs(scatterplot_matrix_D, upper = list(continuous = wrap("cor", method = "spearman", size = 
+                                                               2)),
+        lower = list(continuous = wrap("points", alpha = 0.3, size=0.1))) +
+  theme_bw()
+
+# simpler visualisation:
+ggcorr(scatterplot_matrix_D, label = TRUE, method = c("all.obs", "spearman"))
+```
+
+### Fruits
+```{r warning = FALSE}
+scatterplot_matrix_Fr <- dplyr::select(DOMINO, !(PARTICIPANT:COUNTRY)) %>%
+  dplyr::select(APPLES:BLACKCURR)
+ggpairs(scatterplot_matrix_Fr, upper = list(continuous = wrap("cor", method = "spearman", size = 
+                                                                2)),
+        lower = list(continuous = wrap("points", alpha = 0.3, size=0.1))) +
+  theme_bw()
+
+# simpler visualisation:
+ggcorr(scatterplot_matrix_Fr, label = TRUE, method = c("all.obs", "spearman"))
+```
+
+### Vegetables
+```{r warning = FALSE}
+scatterplot_matrix_V <- dplyr::select(DOMINO, !(PARTICIPANT:COUNTRY)) %>%
+  dplyr::select(CARPUMP:OLIVES)
+ggpairs(scatterplot_matrix_V, upper = list(continuous = wrap("cor", method = "spearman", size = 
+                                                               2)),
+        lower = list(continuous = wrap("points", alpha = 0.3, size=0.1))) +
+  theme_bw()
+
+# simpler visualisation:
+ggcorr(scatterplot_matrix_V, label = TRUE, method = c("all.obs", "spearman"))
+```
+
