@@ -193,7 +193,6 @@ Using Wilcoxon rank sum test (Mann-Whitney U test) as the distribution is non-pa
 data aren't paired.
 
 H0: median daily food intake does not differ between (2 selected) countries for each category
-
 H1: median daily food intake does differ between (2 selected) countries for each category
 
 ### bread and savoury biscuits
@@ -330,6 +329,7 @@ wilcox_Fr_p <- tibble(Country1, Country2, wilcox_Fr)
 wilcox_Fr_p$holm_adjusted_w_Fr <- p.adjust(wilcox_Fr, method = "holm")
 wilcox_Fr_p
 ```
+
 ### vegetables
 ```{r}
 UK_Sw_V_w <- wilcox_pairwise(cat = "vegetables", country1 = "UK", country2 = "Switzerland")
@@ -345,4 +345,125 @@ Country2 <- c("Switzerland", "Poland", "Spain", "Poland", "Spain", "Poland")
 wilcox_V_p <- tibble(Country1, Country2, wilcox_V)
 wilcox_V_p$holm_adjusted_w_V <- p.adjust(wilcox_V, method = "holm")
 wilcox_V_p
+```
+
+### Boxplots with significance
+```{r}
+library(ggpubr)
+library(rstatix)
+wilcox_p <- DOMINO_category %>%
+  group_by(category) %>%
+  wilcox_test(daily_FFQ_score ~ COUNTRY, p.adjust.method = "holm") %>%
+  add_significance("p.adj") %>%
+  add_xy_position(x = "y_pos")
+
+# Meat and fish
+MF_p_adj <- dplyr::filter(wilcox_p, category == "meat_fish") 
+
+ggboxplot(data = filter(DOMINO_category, category == "meat_fish"),  x = "COUNTRY", y = "daily_FFQ_score", fill = "COUNTRY",
+                     xlab = "Country",
+                     ylab = "Daily FFQ score",
+                     title = "Daily FFQ score of meat and fish by country") +
+stat_compare_means(method = "kruskal.test", label.y = 12) +
+stat_pvalue_manual(MF_p_adj, xmin = "group1", xmax = "group2", label = "p.adj")
+
+# Bread and savoury biscuits
+BSB_p_adj <- dplyr::filter(wilcox_p, category == "bread_sav_biscuits") 
+
+ggboxplot(data = filter(DOMINO_category, category == "bread_sav_biscuits"),  x = "COUNTRY", y = "daily_FFQ_score", fill = "COUNTRY",
+                     xlab = "Country",
+                     ylab = "Daily FFQ score",
+                     title = "Daily FFQ score of bread and savoury biscuits by country") +
+stat_compare_means(method = "kruskal.test", label.y = 12) +
+stat_pvalue_manual(BSB_p_adj, xmin = "group1", xmax = "group2", label = "p.adj")
+
+# Cereals
+C_p_adj <- dplyr::filter(wilcox_p, category == "cereals") 
+
+ggboxplot(data = filter(DOMINO_category, category == "cereals"),  x = "COUNTRY", y = "daily_FFQ_score", fill = "COUNTRY",
+                     xlab = "Country",
+                     ylab = "Daily FFQ score",
+                     title = "Daily FFQ score of cereals by country") +
+stat_compare_means(method = "kruskal.test", label.y = 12) +
+stat_pvalue_manual(C_p_adj, xmin = "group1", xmax = "group2", label = "p.adj")
+
+# Potatoes, rice and pasta
+PRP_p_adj <- dplyr::filter(wilcox_p, category == "potatoes_rice_pasta") 
+
+ggboxplot(data = filter(DOMINO_category, category == "potatoes_rice_pasta"),  x = "COUNTRY", y = "daily_FFQ_score", fill = "COUNTRY",
+                     xlab = "Country",
+                     ylab = "Daily FFQ score",
+                     title = "Daily FFQ score of potatoes, rice and pasta by country") +
+stat_compare_means(method = "kruskal.test", label.y = 12) +
+stat_pvalue_manual(PRP_p_adj, xmin = "group1", xmax = "group2", label = "p.adj")
+
+# Dairy and fats
+DF_p_adj <- dplyr::filter(wilcox_p, category == "dairy_fats") 
+
+ggboxplot(data = filter(DOMINO_category, category == "dairy_fats"),  x = "COUNTRY", y = "daily_FFQ_score", fill = "COUNTRY",
+                     xlab = "Country",
+                     ylab = "Daily FFQ score",
+                     title = "Daily FFQ score of dairy and fats by country") +
+stat_compare_means(method = "kruskal.test", label.y = 12) +
+stat_pvalue_manual(DF_p_adj, xmin = "group1", xmax = "group2", label = "p.adj")
+
+# On bread and vegetables
+OBV_p_adj <- dplyr::filter(wilcox_p, category == "on_bread_veg") 
+
+ggboxplot(data = filter(DOMINO_category, category == "on_bread_veg"),  x = "COUNTRY", y = "daily_FFQ_score", fill = "COUNTRY",
+                     xlab = "Country",
+                     ylab = "Daily FFQ score",
+                     title = "Daily FFQ score of foods on bread and vegetables by country") +
+stat_compare_means(method = "kruskal.test", label.y = 12) +
+stat_pvalue_manual(OBV_p_adj, xmin = "group1", xmax = "group2", label = "p.adj")
+
+# Sweets and snacks
+SwS_p_adj <- dplyr::filter(wilcox_p, category == "sweets_snacks") 
+
+ggboxplot(data = filter(DOMINO_category, category == "sweets_snacks"),  x = "COUNTRY", y = "daily_FFQ_score", fill = "COUNTRY",
+                     xlab = "Country",
+                     ylab = "Daily FFQ score",
+                     title = "Daily FFQ score of sweets and snacks by country") +
+stat_compare_means(method = "kruskal.test", label.y = 12) +
+stat_pvalue_manual(SwS_p_adj, xmin = "group1", xmax = "group2", label = "p.adj")
+
+# Soups, sauces and spreads
+SSS_p_adj <- dplyr::filter(wilcox_p, category == "soups_sauces_spreads") 
+
+ggboxplot(data = filter(DOMINO_category, category == "soups_sauces_spreads"),  x = "COUNTRY", y = "daily_FFQ_score", fill = "COUNTRY",
+                     xlab = "Country",
+                     ylab = "Daily FFQ score",
+                     title = "Daily FFQ score of soups, sauces and spreads by country") +
+stat_compare_means(method = "kruskal.test", label.y = 12) +
+stat_pvalue_manual(SSS_p_adj, xmin = "group1", xmax = "group2", label = "p.adj")
+
+# Drinks
+D_p_adj <- dplyr::filter(wilcox_p, category == "drinks") 
+
+ggboxplot(data = filter(DOMINO_category, category == "drinks"),  x = "COUNTRY", y = "daily_FFQ_score", fill = "COUNTRY",
+                     xlab = "Country",
+                     ylab = "Daily FFQ score",
+                     title = "Daily FFQ score of drinks by country") +
+stat_compare_means(method = "kruskal.test", label.y = 12) +
+stat_pvalue_manual(D_p_adj, xmin = "group1", xmax = "group2", label = "p.adj")
+
+# Fruits
+Fr_p_adj <- dplyr::filter(wilcox_p, category == "fruits") 
+
+ggboxplot(data = filter(DOMINO_category, category == "fruits"),  x = "COUNTRY", y = "daily_FFQ_score", fill = "COUNTRY",
+                     xlab = "Country",
+                     ylab = "Daily FFQ score",
+                     title = "Daily FFQ score of fruits by country") +
+stat_compare_means(method = "kruskal.test", label.y = 12) +
+stat_pvalue_manual(Fr_p_adj, xmin = "group1", xmax = "group2", label = "p.adj")
+
+# Vegetables
+V_p_adj <- dplyr::filter(wilcox_p, category == "vegetables") 
+
+ggboxplot(data = filter(DOMINO_category, category == "vegetables"),  x = "COUNTRY", y = "daily_FFQ_score", fill = "COUNTRY",
+                     xlab = "Country",
+                     ylab = "Daily FFQ score",
+                     title = "Daily FFQ score of vegetables by country") +
+stat_compare_means(method = "kruskal.test", label.y = 12) +
+stat_pvalue_manual(V_p_adj, xmin = "group1", xmax = "group2", label = "p.adj")
 ```
