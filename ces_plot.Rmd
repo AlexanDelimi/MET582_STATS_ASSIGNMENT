@@ -1,0 +1,261 @@
+---
+title: "radarplots2"
+output: html_document
+---
+
+```{r}
+library(shiny)
+library(readr)
+library(reshape2)
+library(dplyr)
+library(tidyverse)
+library(stringr)
+library(RColorBrewer)
+library(ggplot2)
+library(openxlsx)
+library(tibble)
+library(devtools)
+library(XLConnect)
+library(scales)
+setwd("~/Library/Mobile Documents/com~apple~CloudDocs/Documents/masters/MET582/data project")
+### Import data and select prelimary variables (beef to olive)
+DOMINO <- read_csv(file = "FFQ_for_MET582.csv", col_names = TRUE, na = "NA") %>%
+  select(COUNTRY:OLIVES) #%>%
+  #head()
+### Code missing values as NA and perform summary statistics
+DOMINO %>%
+        select(COUNTRY:OLIVES)
+      DOMINO[DOMINO == -9] <- NA
+      DOMINO[DOMINO == -8] <- NA
+      DOMINO[DOMINO ==  1] <- 0       #FFQ NEVER
+      DOMINO[DOMINO ==  2] <- 0.067   #FFQ 1-3 TIMES A MONTH(AVERAGE 2 TIMES A MONTH 2/30)
+      DOMINO[DOMINO ==  3] <- 0.143   #FFQ ONCE A WEEK 4.29/30
+      DOMINO[DOMINO ==  4] <- 0.429   #FFQ 2-4 TIMES A WEEK AVG 3 TIMES A WEEK 3*4.29/30
+      DOMINO[DOMINO ==  5] <- 0.786   #FFQ 5-6 TIMES A WEEK AVG 5.5 TIMES A WEEK 5.5*4.29/30
+      DOMINO[DOMINO ==  6] <- 1       #FFQ ONCE A DAY 30/30
+      DOMINO[DOMINO ==  7] <- 2.5     #FFQ 2-3 TIMES A DAY 2.5*30/30   
+      DOMINO[DOMINO ==  8] <- 4.5     #FFQ 4-5 TIMES A DAY 4.5*30/30 
+      DOMINO[DOMINO ==  9] <- 6       #FFQ 6+ TIMES A DAY 6*30/30
+```
+  
+```{r}
+wb <- loadWorkbook("UK Data.xlsx")
+df <- readWorksheet(wb, sheet=1) 
+overall <-function(DOMINO, df, dfcolumn){
+  
+  temp<-df%>%
+    select(dfcolumn)
+  temp<-t(temp)
+  colnames(temp)<-df$FOOD
+  temp<-as_tibble(temp)
+  temp_domino<-DOMINO%>%
+    select(-COUNTRY)
+  temp<-temp%>%
+    slice(rep(1:n(),nrow(DOMINO)))
+  res<-temp*temp_domino
+  return (res)
+}
+#Extracting nutritional information and multiplying by daily intake 
+KJ <- overall(DOMINO,df,'ENERGY..KJ.')
+KJ$sum <- rowSums(KJ, na.rm = TRUE)
+Veg <- overall(DOMINO,df, 'Vegetables')
+Veg$sum <- rowSums(Veg, na.rm = TRUE)
+Fruit <- overall(DOMINO,df,'Fruit')
+Fruit$sum <- rowSums(Fruit, na.rm = TRUE)
+W.Grain <- overall(DOMINO,df,'Wholegrains')
+W.Grain$sum <- rowSums(W.Grain, na.rm = TRUE)
+Dairy <- overall(DOMINO,df,'Dairy')
+Dairy$sum <- rowSums(Dairy, na.rm = TRUE)
+Protein <- overall(DOMINO,df,'PROTEIN..g.')
+Protein$sum <- rowSums(Protein, na.rm = TRUE)
+T.Fat <- overall(DOMINO,df,'Total.fat..g.')
+T.Fat$sum <- rowSums(T.Fat, na.rm = TRUE)
+Sodium <- overall(DOMINO,df,'sodium..mg.')
+Sodium$sum <- rowSums(Sodium, na.rm = TRUE)
+Sat.Fat <- overall(DOMINO,df,'Sat.fat..g.')
+Sat.Fat$sum <- rowSums(Sat.Fat, na.rm = TRUE)
+Fish <- overall(DOMINO,df,'Total.Fish')
+Fish$sum <- rowSums(Fish, na.rm = TRUE)
+R.Meat <- overall(DOMINO,df,'Red.meat')
+R.Meat$sum <- rowSums(R.Meat, na.rm = TRUE)
+```
+
+```{r}
+#Nuts Seeds and Olives...Need help adding nuts column
+N.S.O <- as.data.frame(DOMINO$FLAXSEED)
+N.S.O$Olive <- DOMINO$OLIVES
+N.S.O$Peanut <- DOMINO$PEANUT
+N.S.O$Sum <- rowSums(N.S.O)
+#Legumes
+Legumes <- as.data.frame(DOMINO$PEAS)
+Legumes$Gbean <- DOMINO$GBEANS
+Legumes$Babeans <- DOMINO$BABEANS
+Legumes$Lentils <- DOMINO$LENTILS
+Legumes$Sum <- rowSums(Legumes)
+#Processed Meat
+P.Meat <- as.data.frame(DOMINO$HAM)
+P.Meat$Chorizo <- DOMINO$CHORIZO
+P.Meat$C.Beef <- DOMINO$CORNBEEF
+P.Meat$Sausage <- DOMINO$SAUSAGE
+P.Meat$M.Ball <- DOMINO$MEATBALLS
+P.Meat$Sum <- rowSums(P.Meat)
+#Potatoes
+Potato <- as.data.frame(DOMINO$POTSPREP)
+Potato$Plain <- DOMINO$POTSPLAIN
+Potato$Salad <- DOMINO$POTSALAD
+Potato$Cake <- DOMINO$POTCAKE
+Potato$croq <- DOMINO$CROQUETTE
+Potato$Crisps <- DOMINO$CRISPS
+Potato$Sum <- rowSums(Potato)
+#Greens and Beans 
+gb <- as.data.frame(DOMINO$BSPROUT)
+gb$Gsalad <- DOMINO$GSALAD
+gb$babean <- DOMINO$BABEANS
+gb$lentil <- DOMINO$LENTILS
+gb$spinach <- DOMINO$SPINACH
+gb$broccoli <- DOMINO$BROCCOLI
+gb$sprouts <- DOMINO$SPROUTS
+gb$cabbage <- DOMINO$CABBAGE
+gb$chincabbage <- DOMINO$CHINCABB
+gb$stemcab <- DOMINO$STEMCABB
+gb$sauerk <- DOMINO$SAUERK
+gb$aspar <- DOMINO$ASPAR
+gb$marrow <- DOMINO$MARROW
+gb$sum <- rowSums(gb)
+#Whole Fruit
+W.Fruit <- as.data.frame(DOMINO$APPLES)
+W.Fruit$Pear <- DOMINO$PEARS
+W.Fruit$orange <- DOMINO$ORANGES
+W.Fruit$grape.f <- DOMINO$GRAPEFRT
+W.Fruit$banana <- DOMINO$BANANAS
+W.Fruit$grape <- DOMINO$GRAPES
+W.Fruit$melon <- DOMINO$MELON
+W.Fruit$peach <- DOMINO$PEACH
+W.Fruit$strawb. <- DOMINO$STRAWB
+W.Fruit$Cherry <- DOMINO$CHERRIES
+W.Fruit$mango <- DOMINO$MANGO
+W.Fruit$blackc. <- DOMINO$BLACKCURR
+W.Fruit$sum <- rowSums(W.Fruit)
+#SEAFOOD PROTEIN HELP!!!
+# Grouping Mediteranian Diet
+m <- cbind(Fruit$sum, Veg$sum, W.Grain$sum, N.S.O$Sum, Dairy$sum, DOMINO$CHICKEN, Fish$sum, DOMINO$EGGS, Legumes$Sum, Potato$Sum, R.Meat$sum, P.Meat$Sum)
+  
+med.diet <- as.data.frame(m)
+colnames(med.diet) <- c("Fruit", "Vegetables", "WholeGrain", "Nuts,Seeds,Olives", "Dairy", "WhiteMeat", "Fish", "Eggs", "Legumes", "Potato", "RedMeat", "ProcessedMeat")
+# Divide daily intake by recomended daily intake to give a "perfect score" of 0
+lapply(med.diet, as.numeric)
+med.diet$Fruit <- med.diet$Fruit/3
+med.diet$Vegetables <- med.diet$Vegetables/6
+med.diet$WholeGrain <- med.diet$WholeGrain/4.5
+med.diet$`Nuts,Seeds,Olives` <- med.diet$`Nuts,Seeds,Olives`/1.5
+med.diet$Dairy <- med.diet$Dairy/2
+med.diet$WhiteMeat <- med.diet$WhiteMeat/0.286
+med.diet$Fish <- med.diet$Fish/0.286
+med.diet$Eggs <- med.diet$Eggs/0.429
+med.diet$Legumes <- med.diet$Legumes/0.286
+med.diet$Potato <- med.diet$Potato/0.429
+med.diet$RedMeat <- med.diet$RedMeat/0.286
+med.diet$ProcessedMeat <- med.diet$ProcessedMeat/0.143
+med.diet$Country <- DOMINO$COUNTRY
+```
+```{r}
+# Separate out positive and negative med.diet categories 
+med.diet.pos <- as.data.frame (cbind(med.diet$Fruit, med.diet$Vegetables, med.diet$WholeGrain, med.diet$`Nuts,Seeds,Olives`, med.diet$Legumes, med.diet$Fish, med.diet$WhiteMeat, med.diet$Dairy))
+colnames(med.diet.pos) <- c("Fruit", "Vegetables", "WholeGrain", "Nuts,Seeds,Olives", "Legumes", "Fish", "WhiteMeat", "Dairy")
+med.diet.pos$Mean <- rowMeans(med.diet.pos)
+med.diet.pos$Country <- DOMINO$COUNTRY
+med.diet.neg <- as.data.frame (cbind(med.diet$Potato, med.diet$RedMeat, med.diet$ProcessedMeat))
+colnames(med.diet.neg) <- c("Potato", "RedMeat", "ProcessedMeat")
+med.diet.neg$Mean <- rowMeans(med.diet.neg)
+med.diet.neg$Country <- DOMINO$COUNTRY
+```
+
+# Means of mediterranean diet by country for plotting
+```{r}
+med.diet_means <- med.diet %>% 
+group_by(Country) %>%
+summarise(across(everything(), mean))
+```
+
+# Radar plot for Mediterranean diet
+```{r}
+library(fmsb)
+med.diet_means <- add_row(med.diet_means, "Fruit" = 0, "Vegetables" = 0,  "Nuts,Seeds,Olives" = 0, "Dairy" = 0, "WhiteMeat" = 0, "Fish" = 0, "Eggs" = 0, "Legumes" = 0, "Potato" = 0, "RedMeat" = 0, "ProcessedMeat" = 0) %>%
+  add_row("Fruit" = 7.5, "Vegetables" = 7.5,  "Nuts,Seeds,Olives" = 7.5, "Dairy" = 7.5, "WhiteMeat" = 7.5, "Fish" = 7.5, "Eggs" = 7.5, "Legumes" = 7.5, "Potato" = 7.5, "RedMeat" = 7.5, "ProcessedMeat" = 7.5)
+
+rownames(med.diet_means) <- c("Poland", "Spain", "Switzerland", "UK", "min", "max") 
+med.diet_means <- dplyr::select(med.diet_means, -Country)
+rownames(med.diet_means) <- c("Poland", "Spain", "Switzerland", "UK", "min", "max") 
+```
+
+# Radar plot for only UK mean Med diet score (e.g.)
+```{r eval = FALSE}
+UK_data <- med.diet_means[c("max", "min", "UK"), ]
+radarchart(UK_data)
+```
+
+```{r}
+# Radar plot for all countries
+radarchart(med.diet_means[c("max", "min", "UK", "Poland", "Switzerland", "Spain"), ],
+           cglty = 3, plty = 1, pcol = c("red", "blue", "green", "purple"))
+## Add legend to radar plot
+df2 <- med.diet_means[c(1:4),] 
+rownames(df2) <- c("Poland", "Spain", "Switzerland", "UK") 
+legend(x = "bottomright", legend = rownames(df2), horiz = FALSE,
+  bty = "n", pch = 20 , col = c("red", "blue", "green", "purple"),
+  text.col = "black", cex = 1, pt.cex = 1.5, title = "Country")
+```
+
+#Comparative Eating Scores
+```{r}
+# Comparative HEI Categories 
+# Needs Seafood and fish protein added
+h <- cbind(Veg$sum, gb$sum, Fruit$sum, W.Fruit$sum, W.Grain$sum, Dairy$sum, Protein$sum, T.Fat$sum, Sodium$sum, Sat.Fat$sum)
+Comparative.HEI.Categories <- as.data.frame(h)
+colnames(Comparative.HEI.Categories) <- c("Vegetables", "Greens&Beans", "Fruit", "WholeFruit", "WholeGrain", "Dairy", "Protein(g)", "TotalFat(g)", "Sodium(mg)", "SatFat(g)")
+#function to scale results 1-10
+fn <- function(x) x * 10/max(x, na.rm = TRUE)
+#applying sca;es
+Comparative.HEI.Categories <- data.frame(lapply(Comparative.HEI.Categories, fn))
+# Adding countries as identifier
+Comparative.HEI.Categories$Country <- DOMINO$COUNTRY
+```
+
+#Comparative eating score radar plot
+
+# Means of diet by country for plotting
+```{r}
+ces_means <- Comparative.HEI.Categories %>% 
+group_by(Country) %>%
+summarise(across(everything(), mean))
+```
+
+#Radar plot:
+```{r}
+library(fmsb)
+ces_means_plot <- add_row(ces_means, "Vegetables" = 0, "Greens.Beans" = 0,  "Fruit" = 0, "WholeFruit" = 0, "WholeGrain" = 0, "Dairy" = 0, "Protein.g." = 0, "TotalFat.g." = 0, "Sodium.mg." = 0, "SatFat.g." = 0) %>%
+  add_row("Vegetables" = 10, "Greens.Beans" = 10,  "Fruit" = 10, "WholeFruit" = 10, "WholeGrain" = 10, "Dairy" = 10, "Protein.g." = 10, "TotalFat.g." = 10, "Sodium.mg." = 10, "SatFat.g." = 10)
+
+rownames(ces_means_plot) <- c("Poland", "Spain", "Switzerland", "UK", "min", "max") 
+ces_means_plot <- dplyr::select(ces_means_plot, -Country)
+rownames(ces_means_plot) <- c("Poland", "Spain", "Switzerland", "UK", "min", "max") 
+```
+
+# Radar plot for only UK CES (e.g.)
+```{r eval = FALSE}
+UK_data <- ces_means_plot[c("max", "min", "UK"), ]
+radarchart(UK_data)
+```
+
+# Radar plot for all countries mean CES
+```{r}
+radarchart(ces_means_plot[c("max", "min", "UK", "Poland", "Switzerland", "Spain"), ],
+           cglty = 3, plty = 1, pcol = c("red", "blue", "green", "purple"), axistype = 2,
+           title = "Mean Comparative Eating Score by country")
+## Add legend to radar plot
+df2 <- ces_means_plot[c(1:4),] 
+rownames(df2) <- c("Poland", "Spain", "Switzerland", "UK") 
+legend(x = "bottomright", legend = rownames(df2), horiz = FALSE,
+  bty = "n", pch = 20 , col = c("red", "blue", "green", "purple"),
+  text.col = "black", cex = 1, pt.cex = 1.5, title = "Country")
+```
