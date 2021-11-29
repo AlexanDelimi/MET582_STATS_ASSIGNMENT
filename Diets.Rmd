@@ -17,12 +17,12 @@ library(openxlsx)
 library(tibble)
 library(devtools)
 library(XLConnect)
+library(scales)
 
 ### Import data and select prelimary variables (beef to olive)
 DOMINO <- read_csv(file = "FFQ_for_MET582.csv", col_names = TRUE, na = "NA") %>%
   select(COUNTRY:OLIVES) #%>%
   #head()
-
 
 ### Code missing values as NA and perform summary statistics
 DOMINO %>%
@@ -82,7 +82,8 @@ Fish <- overall(DOMINO,df,'Total.Fish')
 Fish$sum <- rowSums(Fish, na.rm = TRUE)
 R.Meat <- overall(DOMINO,df,'Red.meat')
 R.Meat$sum <- rowSums(R.Meat, na.rm = TRUE)
-
+```
+```{r}
 
 #Nuts Seeds and Olives...Need help adding nuts column
 N.S.O <- as.data.frame(DOMINO$FLAXSEED)
@@ -156,12 +157,13 @@ m <- cbind(Fruit$sum, Veg$sum, W.Grain$sum, N.S.O$Sum, Dairy$sum, DOMINO$CHICKEN
 med.diet <- as.data.frame(m)
 colnames(med.diet) <- c("Fruit", "Vegetables", "WholeGrain", "Nuts,Seeds,Olives", "Dairy", "WhiteMeat", "Fish", "Eggs", "Legumes", "Potato", "RedMeat", "ProcessedMeat")
 
+# Divide daily intake by recomended daily intake to give a "perfect score" of 0
 
 lapply(med.diet, as.numeric)
 
 med.diet$Fruit <- med.diet$Fruit/3
 med.diet$Vegetables <- med.diet$Vegetables/6
-med.diet$WholeGrain <- med.diet$WholeGrain4.5
+med.diet$WholeGrain <- med.diet$WholeGrain/4.5
 med.diet$`Nuts,Seeds,Olives` <- med.diet$`Nuts,Seeds,Olives`/1.5
 med.diet$Dairy <- med.diet$Dairy/2
 med.diet$WhiteMeat <- med.diet$WhiteMeat/0.286
@@ -172,15 +174,35 @@ med.diet$Potato <- med.diet$Potato/0.429
 med.diet$RedMeat <- med.diet$RedMeat/0.286
 med.diet$ProcessedMeat <- med.diet$ProcessedMeat/0.143
 med.diet$Country <- DOMINO$COUNTRY
+```
+```{r}
+# Separate out positive and negative med.diet categories 
 
+med.diet.pos <- as.data.frame (cbind(med.diet$Fruit, med.diet$Vegetables, med.diet$WholeGrain, med.diet$`Nuts,Seeds,Olives`, med.diet$Legumes, med.diet$Fish, med.diet$WhiteMeat, med.diet$Dairy))
+colnames(med.diet.pos) <- c("Fruit", "Vegetables", "WholeGrain", "NUts,Seeds,Olives", "Legumes", "Fish", "WhiteMeat", "Dairy")
+med.diet.pos$Mean <- rowMeans(med.diet.pos)
+med.diet.pos$Country <- DOMINO$COUNTRY
 
+med.diet.neg <- as.data.frame (cbind(med.diet$Potato, med.diet$RedMeat, med.diet$ProcessedMeat))
+colnames(med.diet.neg) <- c("Potato", "RedMeat", "ProcessedMeat")
+med.diet.neg$Mean <- rowMeans(med.diet.neg)
+med.diet.neg$Country <- DOMINO$COUNTRY
+
+#Comparative Eating Scores
 # Comparative HEI Categories 
 # Needs Seafood and fish protein added
-h <- cbind(DOMINO$COUNTRY, Veg$sum, gb$sum, Fruit$sum, W.Fruit$sum, W.Grain$sum, Dairy$sum, Protein$sum, T.Fat$sum, Sodium$sum, Sat.Fat$sum)
+h <- cbind(Veg$sum, gb$sum, Fruit$sum, W.Fruit$sum, W.Grain$sum, Dairy$sum, Protein$sum, T.Fat$sum, Sodium$sum, Sat.Fat$sum)
 
 
 Comparative.HEI.Categories <- as.data.frame(h)
-colnames(Comparative.HEI.Categories) <- c("Country", "Vegetables", "Greens&Beans", "Fruit", "WholeFruit", "WholeGrain", "Dairy", "Protein(g)", "TotalFat(g)", "Sodium(mg)", "SatFat(g)")
+colnames(Comparative.HEI.Categories) <- c("Vegetables", "Greens&Beans", "Fruit", "WholeFruit", "WholeGrain", "Dairy", "Protein(g)", "TotalFat(g)", "Sodium(mg)", "SatFat(g)")
 
+#function to scale results 1-10
+fn <- function(x) x * 10/max(x, na.rm = TRUE)
 
+#applying sca;es
+Comparative.HEI.Categories <- data.frame(lapply(Comparative.HEI.Categories, fn))
+
+# Adding countries as identifier
+Comparative.HEI.Categories$Country <- DOMINO$COUNTRY
 ```
