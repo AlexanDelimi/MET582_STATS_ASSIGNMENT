@@ -1,0 +1,30 @@
+# Preparing Mediterranean data for graph
+med.pos.long <- med.diet.pos %>%
+  pivot_longer(cols = Fruit:Dairy, names_to = "Categories", values_to = "Score")
+
+med.neg.long <- med.diet.neg %>%
+  pivot_longer(cols = Potato:ProcessedMeat, names_to = "Categories", values_to = "Score") 
+
+# Positive intake graph
+med.pos.graph <- ggplot (data = med.pos.long, mapping = aes(x = Country, y = Score)) + 
+  geom_col(aes(fill = Categories), position = "dodge") +
+  labs(title = "Positive Meditetanian Diet Intake") +
+  xlab("Country") +
+  ylab("Intake based on Perfect Score of 0") +
+   theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1)) +
+  scale_fill_brewer(palette="Spectral")
+med.pos.graph + geom_hline(yintercept = 1, size=2)
+print(med.pos.graph)
+
+# Negative intake graph
+med.neg.graph <- ggplot (data = med.neg.long, mapping = aes(x = Country, y = Score)) + 
+  geom_col(aes(fill = Categories), position = "dodge") +
+  labs(title = "Negative Meditetanian Diet Intake") +
+  xlab("Country") +
+  ylab("Intake based on Perfect Score of 0") +
+   theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1)) +
+  scale_fill_brewer(palette="Spectral")
+med.neg.graph + geom_hline(yintercept = 1, size=2)
+print(med.neg.graph)
