@@ -125,7 +125,7 @@ ggplot(PCA_loadings) +
   geom_hline(data = loading_intercepts, aes(yintercept = y, colour = type), linetype = "dashed") +
   scale_colour_manual(values = c("green"), 
                       labels = c("High"),
-                      name = "Strength of association to PC2") +
+                      name = "Strength of association to PC1") +
   scale_x_discrete(guide = guide_axis(n.dodge = 2))+
   xlab("Food category") +
   ylab("Loading") +
