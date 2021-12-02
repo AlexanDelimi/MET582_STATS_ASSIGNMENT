@@ -790,7 +790,8 @@ The data are not normally distributed so non-parametric statistical tests should
       radarchart(med.diet_means[z, ],
                  cglty = 3, plty = 1, pcol = c("red", "blue", "green", "purple"))
       ## Add legend to radar plot
-      df2 <- med.diet_means[c(1:4),] 
+      n<-nrow(med.diet_means)-2
+      df2 <- med.diet_means[c(1:n),] 
       rownames(df2) <- head(row.names(med.diet_means),-2)
       legend(x = "bottomright", legend = rownames(df2), horiz = FALSE,
              bty = "n", pch = 20 , col = c("red", "blue", "green", "purple"),
@@ -961,7 +962,8 @@ The data are not normally distributed so non-parametric statistical tests should
                  cglty = 3, plty = 1, pcol = c("red", "blue", "green", "purple"), axistype = 2,
                  title = "Mean Comparative Eating Score by country")
       ## Add legend to radar plot
-      df2 <- ces_means_plot[c(1:4),] 
+      n<-nrow(ces_means_plot)-2
+      df2 <- ces_means_plot[c(1:n),] 
       rownames(df2) <-  as_vector(countries)
       legend(x = "bottomright", legend = rownames(df2), horiz = FALSE,
              bty = "n", pch = 20 , col = c("red", "blue", "green", "purple"),
