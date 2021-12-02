@@ -57,7 +57,7 @@ shinyServer(function(input, output) {
         DOMINO[DOMINO ==  8] <- 4.5     #FFQ 4-5 TIMES A DAY 4.5*30/30 
         DOMINO[DOMINO ==  9] <- 6       #FFQ 6+ TIMES A DAY 6*30/30
         DOMINO$ID <- seq.int(nrow(DOMINO))
-        DOMINO<-DOMINO%>%mutate(SITUATION=ifelse(ID>30, "TRUE","FAlse"))
+        #DOMINO<-DOMINO%>%mutate(SITUATION=ifelse(ID>30, "TRUE","FAlse"))
           
         return(DOMINO)
     })

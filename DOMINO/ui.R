@@ -56,6 +56,7 @@ shinyUI(fluidPage(
             tabsetPanel(
                 tabPanel("Summary",  verbatimTextOutput("summary")),
                 tabPanel("Summary Plot",plotOutput('plot',height = 600, brush = brushOpts(id = "plot2_brush", clip = TRUE, resetOnNew = TRUE)), plotOutput('boxplot', height = 600), plotOutput('vioplot', height = 600)),
+                tabPanel("Missingness",plotOutput("missingno"),plotOutput('missingno1'),uiOutput("country"),plotOutput('missingno2')),
                 tabPanel("PCA", uiOutput("pc1"),uiOutput("pc2"),plotOutput('pca',height = 600, brush = brushOpts(id = "plot2_brush", clip = TRUE, resetOnNew = TRUE)),verbatimTextOutput("pca_summary"),plotOutput("PC1_plot"),plotOutput("PC2_plot")),
                 tabPanel("Covariance Analysis", plotOutput("cov1")),
                 tabPanel("Normality and p-value test",textOutput("Hypothesis"),  verbatimTextOutput("normality"), textOutput("Result"),  textOutput("KWHypothesis"),selectInput('category', "Choose the category to perform Kruskal Wallis test on", choices=c("Meat and Fish"="MEAT & FISH",
