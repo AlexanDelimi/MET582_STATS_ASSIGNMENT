@@ -57,7 +57,7 @@ shinyServer(function(input, output) {
         DOMINO[DOMINO ==  8] <- 4.5     #FFQ 4-5 TIMES A DAY 4.5*30/30 
         DOMINO[DOMINO ==  9] <- 6       #FFQ 6+ TIMES A DAY 6*30/30
         DOMINO$ID <- seq.int(nrow(DOMINO))
-        #DOMINO<-DOMINO%>%mutate(SITUATION=ifelse(ID>30, "TRUE","FAlse"))
+        DOMINO<-DOMINO%>%mutate(SITUATION=ifelse(ID>30, "TRUE","FAlse"))
           
         return(DOMINO)
     })
@@ -431,8 +431,8 @@ shinyServer(function(input, output) {
         KW_MF <- kruskal.test(FFQ ~ COUNTRY, data = DOMINO_MF)
         KW_MF_p <- p.adjust(p = KW_MF$p.value, method = "holm")
         print(KW_MF)
-        print("With Holm's adjustment:")
-        print(KW_MF_p)
+        #print("With Holm's adjustment:")
+        #print(KW_MF_p)
         
     })
     
@@ -766,8 +766,8 @@ The data are not normally distributed so non-parametric statistical tests should
         dplyr::group_by(Country) %>%
         dplyr::summarise(across(everything(), mean))
  
-      med.diet_means <- add_row(med.diet_means, "Fruit" = 0, "Vegetables" = 0,  "Nuts,Seeds,Olives" = 0, "Dairy" = 0, "WhiteMeat" = 0, "Fish" = 0, "Eggs" = 0, "Legumes" = 0, "Potato" = 0, "RedMeat" = 0, "ProcessedMeat" = 0) %>%
-        add_row("Fruit" = 7.5, "Vegetables" = 7.5,  "Nuts,Seeds,Olives" = 7.5, "Dairy" = 7.5, "WhiteMeat" = 7.5, "Fish" = 7.5, "Eggs" = 7.5, "Legumes" = 7.5, "Potato" = 7.5, "RedMeat" = 7.5, "ProcessedMeat" = 7.5)
+      med.diet_means <- add_row(med.diet_means, "Fruit" = 0, "Vegetables" = 0,"WholeGrain"=0,  "Nuts,Seeds,Olives" = 0, "Dairy" = 0, "WhiteMeat" = 0, "Fish" = 0, "Eggs" = 0, "Legumes" = 0, "Potato" = 0, "RedMeat" = 0, "ProcessedMeat" = 0) %>%
+        add_row("Fruit" = 7.5, "Vegetables" = 7.5, "WholeGrain"=7.5, "Nuts,Seeds,Olives" = 7.5, "Dairy" = 7.5, "WhiteMeat" = 7.5, "Fish" = 7.5, "Eggs" = 7.5, "Legumes" = 7.5, "Potato" = 7.5, "RedMeat" = 7.5, "ProcessedMeat" = 7.5)
       countries<-med.diet_means%>%
         dplyr::select(Country)
       countries<-head(countries,-2)
@@ -818,7 +818,7 @@ The data are not normally distributed so non-parametric statistical tests should
         ylab("Intake based on Perfect Score of 0") +
         theme_minimal() +
         theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1)) +
-        scale_fill_brewer(palette="Spectral")
+        scale_colour_manual(values=cbbPalette)
       return(med.pos.graph + geom_hline(yintercept = 1, size=2))
       
     })
@@ -839,7 +839,7 @@ The data are not normally distributed so non-parametric statistical tests should
         ylab("Intake based on Perfect Score of 0") +
         theme_minimal() +
         theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1)) +
-        scale_fill_brewer(palette="Spectral")
+        scale_colour_manual(values=cbbPalette)
       med.neg.graph + geom_hline(yintercept = 1, size=2)
       return(med.neg.graph+ geom_hline(yintercept = 1, size=2))
     })
@@ -960,14 +960,14 @@ The data are not normally distributed so non-parametric statistical tests should
       z<-append(z,"max",0)
       radarchart(ces_means_plot[z, ],
                  cglty = 3, plty = 1, pcol = c("red", "blue", "green", "purple"), axistype = 2,
-                 title = "Mean Comparative Eating Score by country")
+                 title = paste("Mean Comparative Eating Score by",input$groups))
       ## Add legend to radar plot
       n<-nrow(ces_means_plot)-2
       df2 <- ces_means_plot[c(1:n),] 
       rownames(df2) <-  as_vector(countries)
       legend(x = "bottomright", legend = rownames(df2), horiz = FALSE,
              bty = "n", pch = 20 , col = c("red", "blue", "green", "purple"),
-             text.col = "black", cex = 1, pt.cex = 1.5, title = "input$groups")
+             text.col = "black", cex = 1, pt.cex = 1.5, title = input$groups)
     })
     output$CHEI_radar<-renderPlot({chei()})
 })
