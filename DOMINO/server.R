@@ -26,6 +26,8 @@ library(nortest)
 library(ggpubr)
 library(rstatix)
 library(fmsb)
+library(openxlsx)
+library(XLConnect)
 cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 #http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/ = source for colour blind friendly palettes 
 
@@ -624,15 +626,14 @@ The data are not normally distributed so non-parametric statistical tests should
       colnames(temp)<-df$FOOD
       temp<-as_tibble(temp)
       temp_domino<-DOMINO1%>%
-        dplyr::select(-ID,-COUNTRY)
+        dplyr::select(BEEF:OLIVES)
       temp<-temp%>%
         dplyr::slice(rep(1:n(),nrow(DOMINO1)))
       res<-temp*temp_domino
       return (res)
     }
     get_med_data<-reactive({
-      wb <- loadWorkbook("UK Data.xlsx")
-      df <- readWorksheet(wb, sheet=1) 
+      df<-readWorksheetFromFile("UK Data.xlsx", sheet = 1)
       #return(df)
       
       DOMINO<-getdata()
@@ -734,32 +735,32 @@ The data are not normally distributed so non-parametric statistical tests should
       med.diet$Potato <- med.diet$Potato/0.429
       med.diet$RedMeat <- med.diet$RedMeat/0.286
       med.diet$ProcessedMeat <- med.diet$ProcessedMeat/0.143
-      med.diet$Country <- DOMINO$COUNTRY
+      x<-dplyr::select(DOMINO, input$groups)
+      med.diet$Country <- as_vector(x)
       return(med.diet)})
     
       getmedpos<-reactive({
-        DOMINO<-getdata()
         med.diet<-get_med_data()
       # Separate out positive and negative med.diet categories 
       med.diet.pos <- as.data.frame (cbind(med.diet$Fruit, med.diet$Vegetables, med.diet$WholeGrain, med.diet$`Nuts,Seeds,Olives`, med.diet$Legumes, med.diet$Fish, med.diet$WhiteMeat, med.diet$Dairy))
       colnames(med.diet.pos) <- c("Fruit", "Vegetables", "WholeGrain", "Nuts,Seeds,Olives", "Legumes", "Fish", "WhiteMeat", "Dairy")
       med.diet.pos$Mean <- rowMeans(med.diet.pos)
-      med.diet.pos$Country <- DOMINO$COUNTRY
+      med.diet.pos$Country <-med.diet$Country
       return(med.diet.pos)
       })
         
       getmedneg<-reactive({
-        DOMINO<-getdata()
+        
         med.diet<-get_med_data()
         med.diet.neg <- as.data.frame (cbind(med.diet$Potato, med.diet$RedMeat, med.diet$ProcessedMeat))
       colnames(med.diet.neg) <- c("Potato", "RedMeat", "ProcessedMeat")
       med.diet.neg$Mean <- rowMeans(med.diet.neg)
-      med.diet.neg$Country <- DOMINO$COUNTRY
+      med.diet.neg$Country <- med.diet$Country
       return(med.diet.neg)
       })
       
       getmedmeans<-reactive({
-        DOMINO<-getdata()
+    
         med.diet<-get_med_data()
       med.diet_means <- med.diet %>% 
         dplyr::group_by(Country) %>%
@@ -767,22 +768,33 @@ The data are not normally distributed so non-parametric statistical tests should
  
       med.diet_means <- add_row(med.diet_means, "Fruit" = 0, "Vegetables" = 0,  "Nuts,Seeds,Olives" = 0, "Dairy" = 0, "WhiteMeat" = 0, "Fish" = 0, "Eggs" = 0, "Legumes" = 0, "Potato" = 0, "RedMeat" = 0, "ProcessedMeat" = 0) %>%
         add_row("Fruit" = 7.5, "Vegetables" = 7.5,  "Nuts,Seeds,Olives" = 7.5, "Dairy" = 7.5, "WhiteMeat" = 7.5, "Fish" = 7.5, "Eggs" = 7.5, "Legumes" = 7.5, "Potato" = 7.5, "RedMeat" = 7.5, "ProcessedMeat" = 7.5)
-      rownames(med.diet_means) <- c("Poland", "Spain", "Switzerland", "UK", "min", "max") 
+      countries<-med.diet_means%>%
+        dplyr::select(Country)
+      countries<-head(countries,-2)
+      y<-as_vector(distinct(countries))
+      y<-append(y, "min")
+      y<-append(y, "max")
+      rownames(med.diet_means) <- y 
       med.diet_means <- dplyr::select(med.diet_means, -Country)
-      rownames(med.diet_means) <- c("Poland", "Spain", "Switzerland", "UK", "min", "max") 
+      rownames(med.diet_means) <- y
       
       return(med.diet_means)
     })
     med_radar_plot<-reactive({
       med.diet_means<-getmedmeans()
-      radarchart(med.diet_means[c("max", "min", "UK", "Poland", "Switzerland", "Spain"), ], cglty = 3, plty = 1, pcol = c("red", "blue", "green", "purple"))
+      countries<-head(row.names(med.diet_means),-2)
+      z<-countries
+      z<-append(z,"min",0)
+      z<-append(z,"max",0)
+      
+      radarchart(med.diet_means[z, ],
+                 cglty = 3, plty = 1, pcol = c("red", "blue", "green", "purple"))
       ## Add legend to radar plot
       df2 <- med.diet_means[c(1:4),] 
-      rownames(df2) <- c("Poland", "Spain", "Switzerland", "UK") 
+      rownames(df2) <- head(row.names(med.diet_means),-2)
       legend(x = "bottomright", legend = rownames(df2), horiz = FALSE,
              bty = "n", pch = 20 , col = c("red", "blue", "green", "purple"),
-             text.col = "black", cex = 1, pt.cex = 1.5, title = "Country")
-      
+             text.col = "black", cex = 1, pt.cex = 1.5, title = input$groups)
     })
     testxl<-reactive({
       wb <- loadWorkbook("UK Data.xlsx")
@@ -798,10 +810,10 @@ The data are not normally distributed so non-parametric statistical tests should
       # Preparing Mediterranean data for graph
       med.pos.long <- med.diet.pos %>%
         pivot_longer(cols = Fruit:Dairy, names_to = "Categories", values_to = "Score")
-      med.pos.graph <- ggplot (data = med.pos.long, mapping = aes(x = Country, y = Score)) + 
+      med.pos.graph <- ggplot (data = med.pos.long, mapping = aes(x = Country, y =Score)) + 
         geom_col(aes(fill = Categories), position = "dodge") +
         labs(title = "Positive Meditetanian Diet Intake") +
-        xlab("Country") +
+        xlab(input$groups) +
         ylab("Intake based on Perfect Score of 0") +
         theme_minimal() +
         theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1)) +
@@ -822,7 +834,7 @@ The data are not normally distributed so non-parametric statistical tests should
       med.neg.graph <- ggplot (data = med.neg.long, mapping = aes(x = Country, y = Score)) + 
         geom_col(aes(fill = Categories), position = "dodge") +
         labs(title = "Negative Meditetanian Diet Intake") +
-        xlab("Country") +
+        xlab(input$groups) +
         ylab("Intake based on Perfect Score of 0") +
         theme_minimal() +
         theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1)) +
@@ -835,8 +847,8 @@ The data are not normally distributed so non-parametric statistical tests should
       negs()
     })
     chei<-reactive({
-      wb <- loadWorkbook("UK Data.xlsx")
-      df <- readWorksheet(wb, sheet=1) 
+      df<-readWorksheetFromFile("UK Data.xlsx", sheet = 1)
+      
       #return(df)
       
       DOMINO<-getdata()
@@ -926,24 +938,34 @@ The data are not normally distributed so non-parametric statistical tests should
       #applying sca;es
       Comparative.HEI.Categories <- data.frame(lapply(Comparative.HEI.Categories, fn))
       # Adding countries as identifier
-      Comparative.HEI.Categories$Country <- DOMINO$COUNTRY
+      x<-dplyr::select(DOMINO, input$groups)
+      Comparative.HEI.Categories$Country <- as_vector(x)
       ces_means <- Comparative.HEI.Categories %>% 
         group_by(Country) %>%
         dplyr::summarise(across(everything(), mean))
       ces_means_plot <- add_row(ces_means, "Vegetables" = 0, "Greens.Beans" = 0,  "Fruit" = 0, "WholeFruit" = 0, "WholeGrain" = 0, "Dairy" = 0, "Protein.g." = 0, "TotalFat.g." = 0, "Sodium.mg." = 0, "SatFat.g." = 0) %>%
         add_row("Vegetables" = 10, "Greens.Beans" = 10,  "Fruit" = 10, "WholeFruit" = 10, "WholeGrain" = 10, "Dairy" = 10, "Protein.g." = 10, "TotalFat.g." = 10, "Sodium.mg." = 10, "SatFat.g." = 10)
-      rownames(ces_means_plot) <- c("Poland", "Spain", "Switzerland", "UK", "min", "max") 
+      countries<-ces_means%>%
+        dplyr::select(Country)
+      countries<-head(countries)
+      y<-as_vector(countries)
+      y<-append(y, "min")
+      y<-append(y, "max")
+      rownames(ces_means_plot) <- y
       ces_means_plot <- dplyr::select(ces_means_plot, -Country)
-      rownames(ces_means_plot) <- c("Poland", "Spain", "Switzerland", "UK", "min", "max") 
-      radarchart(ces_means_plot[c("max", "min", "UK", "Poland", "Switzerland", "Spain"), ],
+      rownames(ces_means_plot) <- y 
+      z<-as_vector(countries)
+      z<-append(z,"min",0)
+      z<-append(z,"max",0)
+      radarchart(ces_means_plot[z, ],
                  cglty = 3, plty = 1, pcol = c("red", "blue", "green", "purple"), axistype = 2,
                  title = "Mean Comparative Eating Score by country")
       ## Add legend to radar plot
       df2 <- ces_means_plot[c(1:4),] 
-      rownames(df2) <- c("Poland", "Spain", "Switzerland", "UK") 
+      rownames(df2) <-  as_vector(countries)
       legend(x = "bottomright", legend = rownames(df2), horiz = FALSE,
              bty = "n", pch = 20 , col = c("red", "blue", "green", "purple"),
-             text.col = "black", cex = 1, pt.cex = 1.5, title = "Country")
+             text.col = "black", cex = 1, pt.cex = 1.5, title = "input$groups")
     })
     output$CHEI_radar<-renderPlot({chei()})
 })
