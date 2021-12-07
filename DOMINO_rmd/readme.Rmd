@@ -1,0 +1,62 @@
+---
+title: "Untitled"
+author: "Siobhan Lock"
+date: "07/12/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Read Me (DOMINO-HD Shiny App)
+This Shiny App was developed by Alexandros Delimichalis, Siobhan Lock, Tessa Bate, and Lizzy Smart for their MET582 coursework. 
+
+#### Selecting data
+Data from part 1 of the FFQ was selected for analysis. These are values from 1 to 9 which represent answers on a Likert Scale. Data from part 2 of the FFQ was excluded. Missing values (-8, -9) were recoded as NA. 
+
+#### Transforming FFQ scores
+The original scores of 1-9 and -8/-9 are replaced as follows
+1 = 0.0
+2 = 0.067
+3 = 0.143
+4 = 0.429
+5 = 0.786
+6 = 1
+7 = 2.5
+8 = 4.5
+9 = 6
+-9 = NA
+-8 = NA
+This reflects the mean daily intake of each of the values.
+
+#### Obtaining Nutritional information
+Each nutritional value from the FFQ_Metadata_for_MET582 was multiplied by each participants daily intake score for each recorded food. This gives estimates of nutrient intake for each participant.
+
+#### Calculating Nutritional Indices
+##### Comparative Eating Scores 
+Calculate Data Groups * Daily intake 
+Total veg – Column from nutritional index
+Greens and Beans – SPINACH:MARROW BSPROUT, GSLAD, BABEANS, LENTILS
+Total Fruit – Column from nutritional index
+Whole Fruit APPLES:BLUBERRIES
+Whole
+
+#### Mediterranean Diet 
+Seperate groups and divide them by ideal daily intake score, for perfect score of 1.
+
+##### Positive Intake Foods
+Fruits = daily/3 
+Vegetables = daily/6
+Whole Grains= daily/ 4.5
+Olives/nuts/seeds = PEANUT, FLAXSEED, OLIVES =s um/1.5
+Dairy = daily/2
+White Meat = chicken/ 0.286
+Fish/Seafood  FRYFISH:TROUT/0.286
+Eggs = EGGS/0.429
+Legumes = PEAS, GBEANS, BABEANS, LENTILS/0.286
+
+##### Negative Intake Foods
+Potatoes = POTSPREP, POTSPLAIN, POTSALAD, POTCAKE, CROQUETTE, CRISPS/0.429
+Red Meat = DAILY/0.286
+Processed meat = HAM,CHORIZO, CORNBEEF, SAUSAGE, MEATBALLS/0.143
